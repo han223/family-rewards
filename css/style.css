@@ -20,6 +20,7 @@ button {
   cursor: pointer;
 }
 
+
 /* =========================
    Header
 ========================= */
@@ -89,6 +90,7 @@ header {
   font-weight: 700;
 }
 
+
 /* =========================
    Main
 ========================= */
@@ -137,6 +139,7 @@ main {
   background: #f4f4f2;
 }
 
+
 /* =========================
    Categories
 ========================= */
@@ -173,6 +176,7 @@ main {
   color: #ffffff;
 }
 
+
 /* =========================
    Product Grid
 ========================= */
@@ -185,6 +189,11 @@ main {
 
   gap: 18px;
 }
+
+
+/* =========================
+   Product Card
+========================= */
 
 .card {
   background: #ffffff;
@@ -207,16 +216,31 @@ main {
     0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
+
 /* =========================
-   Product Image
+   Product Image Area
 ========================= */
+
+/*
+  IMPORTANT:
+
+  The image area has a FIXED height.
+
+  The photo itself uses object-fit: contain,
+  so the ENTIRE photo is always visible.
+
+  The photo will NEVER cover the text area.
+*/
 
 .product-image {
   width: 100%;
 
+  height: 205px;
+
   background: #f1f1ee;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -225,21 +249,22 @@ main {
   font-size: 58px;
 }
 
-/*
-  Images are displayed at their
-  natural aspect ratio.
 
-  No cropping.
+/*
+  Full photo, no cropping.
+
+  contain = show the entire image.
 */
 
 .product-image img {
   display: block;
 
   width: 100%;
-  height: auto;
+  height: 100%;
 
   object-fit: contain;
 }
+
 
 /* =========================
    Product Content
@@ -254,6 +279,8 @@ main {
   font-weight: 700;
 
   margin-bottom: 8px;
+
+  line-height: 1.25;
 }
 
 .product-cost {
@@ -262,6 +289,7 @@ main {
 
   margin-bottom: 14px;
 }
+
 
 /* =========================
    Redeem Button
@@ -292,6 +320,7 @@ main {
 
   cursor: not-allowed;
 }
+
 
 /* =========================
    Edit Name Button
@@ -327,6 +356,7 @@ main {
   color: #171717;
 }
 
+
 /* =========================
    Modal
 ========================= */
@@ -338,6 +368,7 @@ main {
   background: rgba(0, 0, 0, 0.35);
 
   display: none;
+
   align-items: center;
   justify-content: center;
 
@@ -402,10 +433,12 @@ main {
 
 .modal-buttons .confirm {
   background: #171717;
+
   color: white;
 
   border-color: #171717;
 }
+
 
 /* =========================
    Toast
@@ -422,6 +455,7 @@ main {
     translateY(20px);
 
   background: #171717;
+
   color: #ffffff;
 
   padding: 12px 18px;
@@ -445,6 +479,7 @@ main {
     translateY(0);
 }
 
+
 /* =========================
    Responsive
 ========================= */
@@ -457,6 +492,7 @@ main {
   }
 
 }
+
 
 @media (max-width: 900px) {
 
@@ -474,6 +510,7 @@ main {
   }
 
 }
+
 
 @media (max-width: 650px) {
 
@@ -508,28 +545,42 @@ main {
     gap: 12px;
   }
 
+
   /*
-    Keep the full image on mobile too.
-    Do NOT use a fixed height here.
+    Mobile image area also stays fixed.
+
+    The photo is contained inside it,
+    so the entire photo is visible.
   */
 
   .product-image {
     width: 100%;
-    height: auto;
 
-    min-height: 120px;
+    height: 150px;
+
+    min-height: 150px;
+
+    background: #f1f1ee;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
 
     font-size: 48px;
   }
 
   .product-image img {
     width: 100%;
-    height: auto;
+    height: 100%;
 
     object-fit: contain;
 
     display: block;
   }
+
 
   .product-content {
     padding: 12px;
