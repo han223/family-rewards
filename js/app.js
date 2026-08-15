@@ -134,16 +134,36 @@ const savedNames =
 
 
 /* =====================================================
-   STATE
+   BALANCE
 ===================================================== */
 
-let balance = 2450;
+let balance =
+  Number(
+    localStorage.getItem("familyRewardsBalance")
+  );
+
+if (Number.isNaN(balance)) {
+  balance = 2450;
+}
+
+
+/* =====================================================
+   REDEMPTION HISTORY
+===================================================== */
+
+let redemptionHistory =
+  JSON.parse(
+    localStorage.getItem("familyRewardsHistory") || "[]"
+  );
+
+
+/* =====================================================
+   STATE
+===================================================== */
 
 let selectedReward = null;
 
 let activeCategory = "All";
-
-let redemptionHistory = [];
 
 
 /* =====================================================
@@ -152,7 +172,10 @@ let redemptionHistory = [];
 
 function getRewardName(reward) {
 
-  return savedNames[reward.id] || reward.name;
+  return (
+    savedNames[reward.id] ||
+    reward.name
+  );
 
 }
 
@@ -168,6 +191,34 @@ function saveRewardName(id, name) {
   localStorage.setItem(
     "familyRewardsNames",
     JSON.stringify(savedNames)
+  );
+
+}
+
+
+/* =====================================================
+   SAVE BALANCE
+===================================================== */
+
+function saveBalance() {
+
+  localStorage.setItem(
+    "familyRewardsBalance",
+    balance.toString()
+  );
+
+}
+
+
+/* =====================================================
+   SAVE HISTORY
+===================================================== */
+
+function saveHistory() {
+
+  localStorage.setItem(
+    "familyRewardsHistory",
+    JSON.stringify(redemptionHistory)
   );
 
 }
@@ -246,9 +297,7 @@ function editRewardName(id) {
     );
 
 
-  if (
-    newName === null
-  ) {
+  if (newName === null) {
     return;
   }
 
@@ -257,9 +306,7 @@ function editRewardName(id) {
     newName.trim();
 
 
-  if (
-    trimmedName === ""
-  ) {
+  if (trimmedName === "") {
 
     showToast(
       "Name cannot be empty."
@@ -297,6 +344,7 @@ function renderProducts() {
 
   let visibleRewards;
 
+
   if (activeCategory === "All") {
 
     visibleRewards = rewards;
@@ -320,6 +368,7 @@ function renderProducts() {
         const canRedeem =
           balance >= reward.cost;
 
+
         const rewardName =
           getRewardName(reward);
 
@@ -332,12 +381,14 @@ function renderProducts() {
 
               ${
                 reward.image
+
                   ? `
                     <img
                       src="${reward.image}"
                       alt="${rewardName}"
                     >
                   `
+
                   : `
                     <div class="product-icon">
                       ${reward.icon || ""}
@@ -398,6 +449,26 @@ function renderProducts() {
 
 
 /* =====================================================
+   UPDATE BALANCE DISPLAY
+===================================================== */
+
+function updateBalanceDisplay() {
+
+  const pointsElement =
+    document.getElementById("points");
+
+  if (!pointsElement) {
+    return;
+  }
+
+
+  pointsElement.textContent =
+    balance.toLocaleString();
+
+}
+
+
+/* =====================================================
    CATEGORY
 ===================================================== */
 
@@ -422,6 +493,7 @@ function openRedeem(id) {
     rewards.find(
       reward => reward.id === id
     );
+
 
   if (!selectedReward) {
     return;
@@ -472,7 +544,8 @@ function openRedeem(id) {
 
   document.getElementById(
     "overlay"
-  ).style.display = "flex";
+  ).style.display =
+    "flex";
 
 }
 
@@ -485,7 +558,9 @@ function closeModal() {
 
   document.getElementById(
     "overlay"
-  ).style.display = "none";
+  ).style.display =
+    "none";
+
 
   selectedReward = null;
 
@@ -523,10 +598,14 @@ function confirmRedeem() {
     selectedReward.cost;
 
 
+  const rewardName =
+    getRewardName(selectedReward);
+
+
   redemptionHistory.push({
 
     reward:
-      getRewardName(selectedReward),
+      rewardName,
 
     cost:
       selectedReward.cost,
@@ -537,18 +616,19 @@ function confirmRedeem() {
   });
 
 
-  document.getElementById(
-    "points"
-  ).textContent =
-    balance.toLocaleString();
+  /* Save everything */
+
+  saveBalance();
+
+  saveHistory();
 
 
-  const rewardName =
-    getRewardName(selectedReward);
+  /* Update screen */
+
+  updateBalanceDisplay();
 
 
   closeModal();
-
 
   renderProducts();
 
@@ -620,7 +700,9 @@ function showHistory() {
       .join(" • ");
 
 
-  showToast(latest);
+  showToast(
+    latest
+  );
 
 }
 
@@ -628,6 +710,8 @@ function showHistory() {
 /* =====================================================
    INITIALIZE
 ===================================================== */
+
+updateBalanceDisplay();
 
 renderFilters();
 
