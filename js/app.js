@@ -1,156 +1,26 @@
-const rewards = [
+```javascript
+/* =====================================================
+   SUPABASE CONFIG
+===================================================== */
 
-  {
-    id: 1,
-    name: "Movie Night",
-    cost: 500,
-    category: "Entertainment",
-    image: "assets/images/movie-night.jpg"
-  },
+const SUPABASE_URL =
+  "https://omvmjspbrugjjlerrkrf.supabase.co";
 
-  {
-    id: 2,
-    name: "Ice Cream",
-    cost: 300,
-    category: "Food",
-    icon: "🍦"
-  },
+const SUPABASE_KEY =
+  "sb_publishable_2cz1Ovi8mEhXTft6UfHXoQ_uXSF8bn4";
 
-  {
-    id: 3,
-    name: "Choose Dinner",
-    cost: 800,
-    category: "Privileges",
-    icon: "🍽️"
-  },
-
-  {
-    id: 4,
-    name: "Toy of Choice",
-    cost: 1200,
-    category: "Toys",
-    icon: "🧸"
-  },
-
-  {
-    id: 5,
-    name: "Extra Screen Time",
-    cost: 400,
-    category: "Privileges",
-    icon: "📱"
-  },
-
-  {
-    id: 6,
-    name: "Pizza Night",
-    cost: 700,
-    category: "Food",
-    icon: "🍕"
-  },
-
-  {
-    id: 7,
-    name: "Board Game",
-    cost: 1000,
-    category: "Toys",
-    icon: "🎲"
-  },
-
-  {
-    id: 8,
-    name: "Family Outing",
-    cost: 1500,
-    category: "Entertainment",
-    icon: "🎡"
-  },
-
-  {
-    id: 9,
-    name: "Favorite Dessert",
-    cost: 350,
-    category: "Food",
-    icon: "🍰"
-  },
-
-  {
-    id: 10,
-    name: "Skip One Chore",
-    cost: 600,
-    category: "Privileges",
-    icon: "✨"
-  },
-
-  {
-    id: 11,
-    name: "New Book",
-    cost: 900,
-    category: "Other",
-    icon: "📚"
-  },
-
-  {
-    id: 12,
-    name: "$5 Treat",
-    cost: 500,
-    category: "Other",
-    icon: "🎁"
-  },
-
-  {
-    id: 13,
-    name: "Game Night",
-    cost: 650,
-    category: "Entertainment",
-    icon: "🎮"
-  },
-
-  {
-    id: 14,
-    name: "Small Toy",
-    cost: 700,
-    category: "Toys",
-    icon: "🚗"
-  },
-
-  {
-    id: 15,
-    name: "Breakfast Choice",
-    cost: 450,
-    category: "Food",
-    icon: "🥞"
-  }
-
-];
-
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 
 /* =====================================================
-   SAVED DATA
+   REWARDS
 ===================================================== */
 
-const savedNames =
-  JSON.parse(
-    localStorage.getItem(
-      "familyRewardsNames"
-    ) || "{}"
-  );
-
-
-const savedImages =
-  JSON.parse(
-    localStorage.getItem(
-      "familyRewardsImages"
-    ) || "{}"
-  );
-
-
-const savedCosts =
-  JSON.parse(
-    localStorage.getItem(
-      "familyRewardsCosts"
-    ) || "{}"
-  );
-
+let rewards = [];
 
 
 /* =====================================================
@@ -174,7 +44,6 @@ if (
 }
 
 
-
 /* =====================================================
    HISTORY
 ===================================================== */
@@ -185,7 +54,6 @@ let redemptionHistory =
       "familyRewardsHistory"
     ) || "[]"
   );
-
 
 
 /* =====================================================
@@ -203,148 +71,85 @@ let pendingPhoto = null;
 let photoRemoved = false;
 
 
+/* =====================================================
+   SUPABASE IMAGE URL
+===================================================== */
+
+function getStorageImageUrl(
+  path
+) {
+
+  if (!path) {
+    return null;
+  }
+
+  if (
+    path.startsWith("http://") ||
+    path.startsWith("https://") ||
+    path.startsWith("data:")
+  ) {
+
+    return path;
+
+  }
+
+  const {
+    data
+  } =
+    supabaseClient
+      .storage
+      .from("product-images")
+      .getPublicUrl(path);
+
+  return data?.publicUrl || null;
+
+}
+
 
 /* =====================================================
    GET NAME
 ===================================================== */
 
-function getRewardName(reward) {
+function getRewardName(
+  reward
+) {
 
-  return (
-    savedNames[reward.id] ||
-    reward.name
-  );
+  return reward.name || "";
 
 }
-
 
 
 /* =====================================================
    GET IMAGE
 ===================================================== */
 
-function getRewardImage(reward) {
+function getRewardImage(
+  reward
+) {
 
   return (
-    savedImages[reward.id] ||
-    reward.image ||
+    getStorageImageUrl(
+      reward.image
+    ) ||
     null
   );
 
 }
 
 
-
 /* =====================================================
    GET COST
 ===================================================== */
 
-function getRewardCost(reward) {
-
-  if (
-    savedCosts[reward.id] !== undefined
-  ) {
-
-    return Number(
-      savedCosts[reward.id]
-    );
-
-  }
-
-
-  return reward.cost;
-
-}
-
-
-
-/* =====================================================
-   SAVE NAME
-===================================================== */
-
-function saveRewardName(
-  id,
-  name
+function getRewardCost(
+  reward
 ) {
 
-  savedNames[id] = name;
-
-  localStorage.setItem(
-    "familyRewardsNames",
-    JSON.stringify(
-      savedNames
-    )
+  return Number(
+    reward.cost || 0
   );
 
 }
-
-
-
-/* =====================================================
-   SAVE IMAGE
-===================================================== */
-
-function saveRewardImage(
-  id,
-  imageData
-) {
-
-  savedImages[id] =
-    imageData;
-
-  localStorage.setItem(
-    "familyRewardsImages",
-    JSON.stringify(
-      savedImages
-    )
-  );
-
-}
-
-
-
-/* =====================================================
-   REMOVE IMAGE
-===================================================== */
-
-function removeSavedRewardImage(
-  id
-) {
-
-  delete savedImages[id];
-
-  localStorage.setItem(
-    "familyRewardsImages",
-    JSON.stringify(
-      savedImages
-    )
-  );
-
-}
-
-
-
-/* =====================================================
-   SAVE COST
-===================================================== */
-
-function saveRewardCost(
-  id,
-  cost
-) {
-
-  savedCosts[id] =
-    cost;
-
-  localStorage.setItem(
-    "familyRewardsCosts",
-    JSON.stringify(
-      savedCosts
-    )
-  );
-
-}
-
 
 
 /* =====================================================
@@ -359,7 +164,6 @@ function saveBalance() {
   );
 
 }
-
 
 
 /* =====================================================
@@ -378,24 +182,153 @@ function saveHistory() {
 }
 
 
+/* =====================================================
+   LOAD REWARDS FROM SUPABASE
+===================================================== */
+
+async function loadRewards() {
+
+  const grid =
+    document.getElementById(
+      "productGrid"
+    );
+
+  if (grid) {
+
+    grid.innerHTML = `
+
+      <div
+        style="
+          grid-column: 1 / -1;
+          text-align: center;
+          padding: 40px;
+        "
+      >
+        Loading rewards...
+      </div>
+
+    `;
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("rewards")
+      .select(
+        "id,name,cost,category,image,icon"
+      )
+      .order(
+        "id",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (error) {
+
+    console.error(
+      "Supabase rewards error:",
+      error
+    );
+
+
+    if (grid) {
+
+      grid.innerHTML = `
+
+        <div
+          style="
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+          "
+        >
+
+          <strong>
+            Unable to load rewards.
+          </strong>
+
+          <br><br>
+
+          Please check your Supabase
+          connection and policies.
+
+        </div>
+
+      `;
+
+    }
+
+    return;
+
+  }
+
+
+  rewards =
+    data || [];
+
+
+  if (
+    rewards.length === 0
+  ) {
+
+    if (grid) {
+
+      grid.innerHTML = `
+
+        <div
+          style="
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+          "
+        >
+          No rewards found.
+        </div>
+
+      `;
+
+    }
+
+    return;
+
+  }
+
+
+  renderFilters();
+
+  renderProducts();
+
+}
+
 
 /* =====================================================
    CATEGORIES
 ===================================================== */
 
-const categories = [
+function getCategories() {
 
-  "All",
+  return [
 
-  ...new Set(
-    rewards.map(
-      reward =>
-        reward.category
+    "All",
+
+    ...new Set(
+      rewards
+        .map(
+          reward =>
+            reward.category
+        )
+        .filter(Boolean)
     )
-  )
 
-];
+  ];
 
+}
 
 
 /* =====================================================
@@ -408,6 +341,15 @@ function renderFilters() {
     document.getElementById(
       "filters"
     );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  const categories =
+    getCategories();
 
 
   container.innerHTML =
@@ -424,9 +366,11 @@ function renderFilters() {
                   ? "active"
                   : ""
               }"
-              onclick="setCategory('${category}')"
+              onclick="setCategory('${escapeHtml(category)}')"
             >
-              ${category}
+
+              ${escapeHtml(category)}
+
             </button>
 
           `;
@@ -438,12 +382,46 @@ function renderFilters() {
 }
 
 
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHtml(
+  value
+) {
+
+  return String(value)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
 
 /* =====================================================
    OPEN EDIT REWARD
 ===================================================== */
 
-function openEditReward(id) {
+function openEditReward(
+  id
+) {
 
   const reward =
     rewards.find(
@@ -472,13 +450,17 @@ function openEditReward(id) {
   document.getElementById(
     "editRewardName"
   ).value =
-    getRewardName(reward);
+    getRewardName(
+      reward
+    );
 
 
   document.getElementById(
     "editRewardCost"
   ).value =
-    getRewardCost(reward);
+    getRewardCost(
+      reward
+    );
 
 
   renderEditPhoto();
@@ -490,7 +472,6 @@ function openEditReward(id) {
     "flex";
 
 }
-
 
 
 /* =====================================================
@@ -519,7 +500,6 @@ function closeEditReward() {
 }
 
 
-
 /* =====================================================
    RENDER EDIT PHOTO
 ===================================================== */
@@ -532,8 +512,13 @@ function renderEditPhoto() {
     );
 
 
-  if (!editingReward) {
+  if (
+    !preview ||
+    !editingReward
+  ) {
+
     return;
+
   }
 
 
@@ -579,13 +564,17 @@ function renderEditPhoto() {
   preview.innerHTML = `
 
     <div class="preview-icon">
-      ${editingReward.icon || "🎁"}
+      ${
+        escapeHtml(
+          editingReward.icon ||
+          "🎁"
+        )
+      }
     </div>
 
   `;
 
 }
-
 
 
 /* =====================================================
@@ -600,13 +589,16 @@ function chooseRewardPhoto() {
     );
 
 
-  input.value = "";
+  if (!input) {
+    return;
+  }
 
+
+  input.value = "";
 
   input.click();
 
 }
-
 
 
 /* =====================================================
@@ -661,7 +653,9 @@ document.addEventListener(
 
 
         reader.onload =
-          function (event) {
+          function (
+            event
+          ) {
 
             pendingPhoto =
               event.target.result;
@@ -697,7 +691,6 @@ document.addEventListener(
 );
 
 
-
 /* =====================================================
    REMOVE PHOTO
 ===================================================== */
@@ -722,12 +715,127 @@ function removeRewardPhoto() {
 }
 
 
+/* =====================================================
+   UPLOAD IMAGE TO SUPABASE STORAGE
+===================================================== */
+
+async function uploadRewardImage(
+  rewardId,
+  dataUrl
+) {
+
+  const response =
+    await fetch(
+      dataUrl
+    );
+
+
+  const blob =
+    await response.blob();
+
+
+  const extension =
+    (
+      blob.type.split("/")[1] ||
+      "jpg"
+    )
+      .replace(
+        "jpeg",
+        "jpg"
+      );
+
+
+  const filePath =
+    `reward-${rewardId}-${Date.now()}.${extension}`;
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .storage
+      .from("product-images")
+      .upload(
+        filePath,
+        blob,
+        {
+          contentType:
+            blob.type,
+          upsert: false
+        }
+      );
+
+
+  if (error) {
+
+    throw error;
+
+  }
+
+
+  return filePath;
+
+}
+
+
+/* =====================================================
+   DELETE OLD IMAGE
+===================================================== */
+
+async function deleteRewardImage(
+  imagePath
+) {
+
+  if (!imagePath) {
+    return;
+  }
+
+
+  if (
+    imagePath.startsWith(
+      "http://"
+    ) ||
+    imagePath.startsWith(
+      "https://"
+    ) ||
+    imagePath.startsWith(
+      "data:"
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .storage
+      .from("product-images")
+      .remove([
+        imagePath
+      ]);
+
+
+  if (error) {
+
+    console.warn(
+      "Unable to delete old image:",
+      error
+    );
+
+  }
+
+}
+
 
 /* =====================================================
    SAVE EDITED REWARD
 ===================================================== */
 
-function saveEditedReward() {
+async function saveEditedReward() {
 
   if (!editingReward) {
     return;
@@ -792,49 +900,197 @@ function saveEditedReward() {
   }
 
 
-  saveRewardName(
-    id,
-    newName
-  );
+  const saveButton =
+    document.querySelector(
+      ".save-edit-button"
+    );
 
 
-  saveRewardCost(
-    id,
-    newCost
-  );
+  if (saveButton) {
+
+    saveButton.disabled =
+      true;
+
+    saveButton.textContent =
+      "Saving...";
+
+  }
 
 
-  if (pendingPhoto) {
+  try {
 
-    saveRewardImage(
-      id,
+    let newImagePath =
+      editingReward.image;
+
+
+    const oldImagePath =
+      editingReward.image;
+
+
+    /* -----------------------------------------
+       NEW PHOTO
+    ----------------------------------------- */
+
+    if (
       pendingPhoto
+    ) {
+
+      newImagePath =
+        await uploadRewardImage(
+          id,
+          pendingPhoto
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       REMOVE PHOTO
+    ----------------------------------------- */
+
+    if (
+      photoRemoved &&
+      !pendingPhoto
+    ) {
+
+      newImagePath =
+        null;
+
+    }
+
+
+    /* -----------------------------------------
+       UPDATE REWARDS TABLE
+    ----------------------------------------- */
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("rewards")
+        .update({
+
+          name:
+            newName,
+
+          cost:
+            newCost,
+
+          image:
+            newImagePath
+
+        })
+        .eq(
+          "id",
+          id
+        )
+        .select(
+          "id,name,cost,category,image,icon"
+        )
+        .single();
+
+
+    if (error) {
+
+      throw error;
+
+    }
+
+
+    /* -----------------------------------------
+       DELETE OLD IMAGE
+    ----------------------------------------- */
+
+    if (
+      pendingPhoto &&
+      oldImagePath &&
+      oldImagePath !==
+        newImagePath
+    ) {
+
+      await deleteRewardImage(
+        oldImagePath
+      );
+
+    }
+
+
+    if (
+      photoRemoved &&
+      oldImagePath
+    ) {
+
+      await deleteRewardImage(
+        oldImagePath
+      );
+
+    }
+
+
+    /* -----------------------------------------
+       UPDATE LOCAL ARRAY
+    ----------------------------------------- */
+
+    const index =
+      rewards.findIndex(
+        reward =>
+          reward.id === id
+      );
+
+
+    if (
+      index !== -1
+    ) {
+
+      rewards[index] =
+        data;
+
+    }
+
+
+    closeEditReward();
+
+    renderFilters();
+
+    renderProducts();
+
+
+    showToast(
+      "Reward updated successfully."
     );
 
-  }
 
+  } catch (
+    error
+  ) {
 
-  if (photoRemoved) {
-
-    removeSavedRewardImage(
-      id
+    console.error(
+      "Save reward error:",
+      error
     );
 
+
+    showToast(
+      "Unable to save reward. Check Supabase policies."
+    );
+
+
+  } finally {
+
+    if (saveButton) {
+
+      saveButton.disabled =
+        false;
+
+      saveButton.textContent =
+        "Save changes";
+
+    }
+
   }
-
-
-  closeEditReward();
-
-
-  renderProducts();
-
-
-  showToast(
-    "Reward updated successfully."
-  );
 
 }
-
 
 
 /* =====================================================
@@ -847,6 +1103,11 @@ function renderProducts() {
     document.getElementById(
       "productGrid"
     );
+
+
+  if (!grid) {
+    return;
+  }
 
 
   let visibleRewards;
@@ -906,7 +1167,6 @@ function renderProducts() {
               class="card"
             >
 
-
               <div
                 class="product-image"
               >
@@ -918,7 +1178,9 @@ function renderProducts() {
 
                       <img
                         src="${rewardImage}"
-                        alt="${rewardName}"
+                        alt="${escapeHtml(
+                          rewardName
+                        )}"
                       >
 
                     `
@@ -928,10 +1190,14 @@ function renderProducts() {
                       <div
                         class="product-icon"
                       >
+
                         ${
-                          reward.icon ||
-                          ""
+                          escapeHtml(
+                            reward.icon ||
+                            ""
+                          )
                         }
+
                       </div>
 
                     `
@@ -940,16 +1206,16 @@ function renderProducts() {
               </div>
 
 
-
               <div
                 class="product-content"
               >
 
-
                 <div
                   class="product-name"
                 >
-                  ${rewardName}
+                  ${escapeHtml(
+                    rewardName
+                  )}
                 </div>
 
 
@@ -964,7 +1230,6 @@ function renderProducts() {
                   points
 
                 </div>
-
 
 
                 <button
@@ -986,14 +1251,12 @@ function renderProducts() {
                 </button>
 
 
-
                 <button
                   class="edit-name-button"
                   onclick="openEditReward(${reward.id})"
                 >
                   ⚙️ Edit Reward
                 </button>
-
 
               </div>
 
@@ -1006,7 +1269,6 @@ function renderProducts() {
       .join("");
 
 }
-
 
 
 /* =====================================================
@@ -1032,7 +1294,6 @@ function updateBalanceDisplay() {
 }
 
 
-
 /* =====================================================
    CATEGORY
 ===================================================== */
@@ -1044,7 +1305,6 @@ function setCategory(
   activeCategory =
     category;
 
-
   renderFilters();
 
   renderProducts();
@@ -1052,12 +1312,13 @@ function setCategory(
 }
 
 
-
 /* =====================================================
    OPEN REDEEM
 ===================================================== */
 
-function openRedeem(id) {
+function openRedeem(
+  id
+) {
 
   selectedReward =
     rewards.find(
@@ -1133,7 +1394,6 @@ function openRedeem(id) {
 }
 
 
-
 /* =====================================================
    CLOSE REDEEM
 ===================================================== */
@@ -1150,7 +1410,6 @@ function closeModal() {
     null;
 
 }
-
 
 
 /* =====================================================
@@ -1232,7 +1491,6 @@ function confirmRedeem() {
 }
 
 
-
 /* =====================================================
    TOAST
 ===================================================== */
@@ -1245,6 +1503,11 @@ function showToast(
     document.getElementById(
       "toast"
     );
+
+
+  if (!toast) {
+    return;
+  }
 
 
   toast.textContent =
@@ -1268,7 +1531,6 @@ function showToast(
   );
 
 }
-
 
 
 /* =====================================================
@@ -1308,13 +1570,11 @@ function showHistory() {
 }
 
 
-
 /* =====================================================
    INITIALIZE
 ===================================================== */
 
 updateBalanceDisplay();
 
-renderFilters();
-
-renderProducts();
+loadRewards();
+```
