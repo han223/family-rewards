@@ -446,6 +446,12 @@ main {
     height: 150px;
     font-size: 48px;
   }
+  .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 
   .product-content {
     padding: 12px;
