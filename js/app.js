@@ -2,10 +2,10 @@ const rewards = [
 
   {
     id: 1,
-  name: "Movie Night",
-  cost: 500,
-  category: "Entertainment",
-  image: "assets/images/movie-night.jpg"
+    name: "Movie Night",
+    cost: 500,
+    category: "Entertainment",
+    image: "assets/images/movie-night.jpg"
   },
 
   {
@@ -124,6 +124,16 @@ const rewards = [
 
 
 /* =====================================================
+   SAVED PRODUCT NAMES
+===================================================== */
+
+const savedNames =
+  JSON.parse(
+    localStorage.getItem("familyRewardsNames") || "{}"
+  );
+
+
+/* =====================================================
    STATE
 ===================================================== */
 
@@ -134,6 +144,33 @@ let selectedReward = null;
 let activeCategory = "All";
 
 let redemptionHistory = [];
+
+
+/* =====================================================
+   GET PRODUCT NAME
+===================================================== */
+
+function getRewardName(reward) {
+
+  return savedNames[reward.id] || reward.name;
+
+}
+
+
+/* =====================================================
+   SAVE PRODUCT NAME
+===================================================== */
+
+function saveRewardName(id, name) {
+
+  savedNames[id] = name;
+
+  localStorage.setItem(
+    "familyRewardsNames",
+    JSON.stringify(savedNames)
+  );
+
+}
 
 
 /* =====================================================
@@ -183,6 +220,73 @@ function renderFilters() {
 
 
 /* =====================================================
+   EDIT REWARD NAME
+===================================================== */
+
+function editRewardName(id) {
+
+  const reward =
+    rewards.find(
+      reward => reward.id === id
+    );
+
+  if (!reward) {
+    return;
+  }
+
+
+  const currentName =
+    getRewardName(reward);
+
+
+  const newName =
+    prompt(
+      "Enter a new name for this reward:",
+      currentName
+    );
+
+
+  if (
+    newName === null
+  ) {
+    return;
+  }
+
+
+  const trimmedName =
+    newName.trim();
+
+
+  if (
+    trimmedName === ""
+  ) {
+
+    showToast(
+      "Name cannot be empty."
+    );
+
+    return;
+
+  }
+
+
+  saveRewardName(
+    reward.id,
+    trimmedName
+  );
+
+
+  renderProducts();
+
+
+  showToast(
+    "Reward name updated."
+  );
+
+}
+
+
+/* =====================================================
    RENDER PRODUCTS
 ===================================================== */
 
@@ -216,27 +320,46 @@ function renderProducts() {
         const canRedeem =
           balance >= reward.cost;
 
+        const rewardName =
+          getRewardName(reward);
+
+
         return `
 
           <article class="card">
+
             <div class="product-image">
+
               ${
                 reward.image
-                  ? `<img src="${reward.image}" alt="${reward.name}">`
-                  : reward.icon || ""
-                }
-                </div>
+                  ? `
+                    <img
+                      src="${reward.image}"
+                      alt="${rewardName}"
+                    >
+                  `
+                  : `
+                    <div class="product-icon">
+                      ${reward.icon || ""}
+                    </div>
+                  `
+              }
+
+            </div>
+
 
             <div class="product-content">
 
               <div class="product-name">
-                ${reward.name}
+                ${rewardName}
               </div>
+
 
               <div class="product-cost">
                 ${reward.cost.toLocaleString()}
                 points
               </div>
+
 
               <button
                 class="redeem-button"
@@ -252,6 +375,14 @@ function renderProducts() {
                     ? "Redeem"
                     : "Not enough points"
                 }
+              </button>
+
+
+              <button
+                class="edit-name-button"
+                onclick="editRewardName(${reward.id})"
+              >
+                ✏️ Edit name
               </button>
 
             </div>
@@ -297,10 +428,14 @@ function openRedeem(id) {
   }
 
 
+  const rewardName =
+    getRewardName(selectedReward);
+
+
   document.getElementById(
     "modalTitle"
   ).textContent =
-    `Redeem ${selectedReward.name}?`;
+    `Redeem ${rewardName}?`;
 
 
   document.getElementById(
@@ -388,14 +523,10 @@ function confirmRedeem() {
     selectedReward.cost;
 
 
-  /*
-    Add redemption record
-  */
-
   redemptionHistory.push({
 
     reward:
-      selectedReward.name,
+      getRewardName(selectedReward),
 
     cost:
       selectedReward.cost,
@@ -406,10 +537,6 @@ function confirmRedeem() {
   });
 
 
-  /*
-    Update balance
-  */
-
   document.getElementById(
     "points"
   ).textContent =
@@ -417,7 +544,7 @@ function confirmRedeem() {
 
 
   const rewardName =
-    selectedReward.name;
+    getRewardName(selectedReward);
 
 
   closeModal();
