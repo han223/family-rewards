@@ -197,9 +197,18 @@ async function uploadRewardPhoto(file, id) {
   return path;
 }
 
+async function deleteRewardPhoto(imagePath) {
+  if (!imagePath || imagePath.startsWith("http://") || imagePath.startsWith("https://") || imagePath.startsWith("data:")) return;
+  const remove = await supabaseClient.storage.from(IMAGE_BUCKET).remove([imagePath]);
+  if (remove.error) {
+    console.warn("Unable to delete old reward photo:", remove.error);
+  }
+}
+
 async function saveEditedReward() {
   if (!editingReward) return;
   const id = editingReward.id;
+  const oldImagePath = editingReward.image || null;
   const nameInput = document.getElementById("editRewardName");
   const costInput = document.getElementById("editRewardCost");
   const newName = nameInput.value.trim();
@@ -218,11 +227,12 @@ async function saveEditedReward() {
     saveButton.textContent = "Saving...";
   }
   try {
-    let imagePath = editingReward.image || null;
+    let imagePath = oldImagePath;
     if (pendingPhotoFile) imagePath = await uploadRewardPhoto(pendingPhotoFile, id);
     if (photoRemoved) imagePath = null;
     const update = await supabaseClient.from("rewards").update({ name: newName, cost: newCost, image: imagePath }).eq("id", id);
     if (update.error) throw update.error;
+    if (oldImagePath && imagePath !== oldImagePath) await deleteRewardPhoto(oldImagePath);
     closeEditReward();
     await loadRewards();
     showToast("Reward updated successfully.");
