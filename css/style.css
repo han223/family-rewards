@@ -218,18 +218,16 @@ main {
 
 
 /* =========================
-   Product Image Area
+   Product Image
 ========================= */
 
 /*
-  IMPORTANT:
+  Fixed image area.
 
-  The image area has a FIXED height.
+  This area belongs ONLY to the image.
 
-  The photo itself uses object-fit: contain,
-  so the ENTIRE photo is always visible.
-
-  The photo will NEVER cover the text area.
+  The product name, points and buttons
+  are completely outside this area.
 */
 
 .product-image {
@@ -237,7 +235,7 @@ main {
 
   height: 205px;
 
-  background: #f1f1ee;
+  background: #f5f5f2;
 
   display: flex;
 
@@ -246,14 +244,16 @@ main {
 
   overflow: hidden;
 
-  font-size: 58px;
+  padding: 18px;
 }
 
 
 /*
-  Full photo, no cropping.
+  The image is intentionally smaller
+  than the image area.
 
-  contain = show the entire image.
+  This creates empty space around
+  the photo and prevents cropping.
 */
 
 .product-image img {
@@ -263,6 +263,9 @@ main {
   height: 100%;
 
   object-fit: contain;
+
+  max-width: 100%;
+  max-height: 100%;
 }
 
 
@@ -281,10 +284,13 @@ main {
   margin-bottom: 8px;
 
   line-height: 1.25;
+
+  min-height: 20px;
 }
 
 .product-cost {
   font-size: 13px;
+
   color: #777;
 
   margin-bottom: 14px;
@@ -305,6 +311,7 @@ main {
   padding: 10px;
 
   background: #171717;
+
   color: #ffffff;
 
   font-weight: 650;
@@ -316,6 +323,7 @@ main {
 
 .redeem-button:disabled {
   background: #dededb;
+
   color: #999;
 
   cursor: not-allowed;
@@ -363,6 +371,7 @@ main {
 
 .overlay {
   position: fixed;
+
   inset: 0;
 
   background: rgba(0, 0, 0, 0.35);
@@ -370,6 +379,7 @@ main {
   display: none;
 
   align-items: center;
+
   justify-content: center;
 
   z-index: 20;
@@ -416,6 +426,7 @@ main {
 
 .modal-buttons {
   display: flex;
+
   gap: 9px;
 }
 
@@ -448,6 +459,7 @@ main {
   position: fixed;
 
   left: 50%;
+
   bottom: 25px;
 
   transform:
@@ -546,37 +558,38 @@ main {
   }
 
 
-  /*
-    Mobile image area also stays fixed.
-
-    The photo is contained inside it,
-    so the entire photo is visible.
-  */
+  /* =========================
+     Mobile Product Image
+  ========================= */
 
   .product-image {
     width: 100%;
 
     height: 150px;
 
-    min-height: 150px;
+    padding: 14px;
 
-    background: #f1f1ee;
+    background: #f5f5f2;
 
     display: flex;
 
     align-items: center;
+
     justify-content: center;
 
     overflow: hidden;
-
-    font-size: 48px;
   }
 
   .product-image img {
     width: 100%;
+
     height: 100%;
 
     object-fit: contain;
+
+    max-width: 100%;
+
+    max-height: 100%;
 
     display: block;
   }
