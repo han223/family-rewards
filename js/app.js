@@ -123,24 +123,34 @@ const rewards = [
 ];
 
 
+
 /* =====================================================
-   SAVED PRODUCT NAMES
+   SAVED DATA
 ===================================================== */
 
 const savedNames =
   JSON.parse(
-    localStorage.getItem("familyRewardsNames") || "{}"
+    localStorage.getItem(
+      "familyRewardsNames"
+    ) || "{}"
   );
 
-
-/* =====================================================
-   SAVED PRODUCT PHOTOS
-===================================================== */
 
 const savedImages =
   JSON.parse(
-    localStorage.getItem("familyRewardsImages") || "{}"
+    localStorage.getItem(
+      "familyRewardsImages"
+    ) || "{}"
   );
+
+
+const savedCosts =
+  JSON.parse(
+    localStorage.getItem(
+      "familyRewardsCosts"
+    ) || "{}"
+  );
+
 
 
 /* =====================================================
@@ -149,22 +159,33 @@ const savedImages =
 
 let balance =
   Number(
-    localStorage.getItem("familyRewardsBalance")
+    localStorage.getItem(
+      "familyRewardsBalance"
+    )
   );
 
-if (Number.isNaN(balance)) {
+
+if (
+  Number.isNaN(balance)
+) {
+
   balance = 2450;
+
 }
 
 
+
 /* =====================================================
-   REDEMPTION HISTORY
+   HISTORY
 ===================================================== */
 
 let redemptionHistory =
   JSON.parse(
-    localStorage.getItem("familyRewardsHistory") || "[]"
+    localStorage.getItem(
+      "familyRewardsHistory"
+    ) || "[]"
   );
+
 
 
 /* =====================================================
@@ -173,11 +194,18 @@ let redemptionHistory =
 
 let selectedReward = null;
 
+let editingReward = null;
+
 let activeCategory = "All";
+
+let pendingPhoto = null;
+
+let photoRemoved = false;
+
 
 
 /* =====================================================
-   GET PRODUCT NAME
+   GET NAME
 ===================================================== */
 
 function getRewardName(reward) {
@@ -190,8 +218,9 @@ function getRewardName(reward) {
 }
 
 
+
 /* =====================================================
-   GET PRODUCT IMAGE
+   GET IMAGE
 ===================================================== */
 
 function getRewardImage(reward) {
@@ -205,36 +234,117 @@ function getRewardImage(reward) {
 }
 
 
+
 /* =====================================================
-   SAVE PRODUCT NAME
+   GET COST
 ===================================================== */
 
-function saveRewardName(id, name) {
+function getRewardCost(reward) {
+
+  if (
+    savedCosts[reward.id] !== undefined
+  ) {
+
+    return Number(
+      savedCosts[reward.id]
+    );
+
+  }
+
+
+  return reward.cost;
+
+}
+
+
+
+/* =====================================================
+   SAVE NAME
+===================================================== */
+
+function saveRewardName(
+  id,
+  name
+) {
 
   savedNames[id] = name;
 
   localStorage.setItem(
     "familyRewardsNames",
-    JSON.stringify(savedNames)
+    JSON.stringify(
+      savedNames
+    )
   );
 
 }
+
 
 
 /* =====================================================
-   SAVE PRODUCT IMAGE
+   SAVE IMAGE
 ===================================================== */
 
-function saveRewardImage(id, imageData) {
+function saveRewardImage(
+  id,
+  imageData
+) {
 
-  savedImages[id] = imageData;
+  savedImages[id] =
+    imageData;
 
   localStorage.setItem(
     "familyRewardsImages",
-    JSON.stringify(savedImages)
+    JSON.stringify(
+      savedImages
+    )
   );
 
 }
+
+
+
+/* =====================================================
+   REMOVE IMAGE
+===================================================== */
+
+function removeSavedRewardImage(
+  id
+) {
+
+  delete savedImages[id];
+
+  localStorage.setItem(
+    "familyRewardsImages",
+    JSON.stringify(
+      savedImages
+    )
+  );
+
+}
+
+
+
+/* =====================================================
+   SAVE COST
+===================================================== */
+
+function saveRewardCost(
+  id,
+  cost
+) {
+
+  savedCosts[id] =
+    cost;
+
+  localStorage.setItem(
+    "familyRewardsCosts",
+    JSON.stringify(
+      savedCosts
+    )
+  );
+
+}
+
 
 
 /* =====================================================
@@ -251,6 +361,7 @@ function saveBalance() {
 }
 
 
+
 /* =====================================================
    SAVE HISTORY
 ===================================================== */
@@ -259,10 +370,13 @@ function saveHistory() {
 
   localStorage.setItem(
     "familyRewardsHistory",
-    JSON.stringify(redemptionHistory)
+    JSON.stringify(
+      redemptionHistory
+    )
   );
 
 }
+
 
 
 /* =====================================================
@@ -270,13 +384,18 @@ function saveHistory() {
 ===================================================== */
 
 const categories = [
+
   "All",
+
   ...new Set(
     rewards.map(
-      reward => reward.category
+      reward =>
+        reward.category
     )
   )
+
 ];
+
 
 
 /* =====================================================
@@ -286,71 +405,386 @@ const categories = [
 function renderFilters() {
 
   const container =
-    document.getElementById("filters");
+    document.getElementById(
+      "filters"
+    );
+
 
   container.innerHTML =
     categories
-      .map(category => {
+      .map(
+        category => {
 
-        return `
-          <button
-            class="filter ${
-              category === activeCategory
-                ? "active"
-                : ""
-            }"
-            onclick="setCategory('${category}')"
-          >
-            ${category}
-          </button>
-        `;
+          return `
 
-      })
+            <button
+              class="filter ${
+                category ===
+                activeCategory
+                  ? "active"
+                  : ""
+              }"
+              onclick="setCategory('${category}')"
+            >
+              ${category}
+            </button>
+
+          `;
+
+        }
+      )
       .join("");
 
 }
 
 
+
 /* =====================================================
-   EDIT REWARD NAME
+   OPEN EDIT REWARD
 ===================================================== */
 
-function editRewardName(id) {
+function openEditReward(id) {
 
   const reward =
     rewards.find(
-      reward => reward.id === id
+      reward =>
+        reward.id === id
     );
+
 
   if (!reward) {
     return;
   }
 
 
-  const currentName =
+  editingReward =
+    reward;
+
+
+  pendingPhoto =
+    null;
+
+
+  photoRemoved =
+    false;
+
+
+  document.getElementById(
+    "editRewardName"
+  ).value =
     getRewardName(reward);
 
 
-  const newName =
-    prompt(
-      "Enter a new name for this reward:",
-      currentName
+  document.getElementById(
+    "editRewardCost"
+  ).value =
+    getRewardCost(reward);
+
+
+  renderEditPhoto();
+
+
+  document.getElementById(
+    "editOverlay"
+  ).style.display =
+    "flex";
+
+}
+
+
+
+/* =====================================================
+   CLOSE EDIT REWARD
+===================================================== */
+
+function closeEditReward() {
+
+  document.getElementById(
+    "editOverlay"
+  ).style.display =
+    "none";
+
+
+  editingReward =
+    null;
+
+
+  pendingPhoto =
+    null;
+
+
+  photoRemoved =
+    false;
+
+}
+
+
+
+/* =====================================================
+   RENDER EDIT PHOTO
+===================================================== */
+
+function renderEditPhoto() {
+
+  const preview =
+    document.getElementById(
+      "editPhotoPreview"
     );
 
 
-  if (newName === null) {
+  if (!editingReward) {
     return;
   }
 
 
-  const trimmedName =
-    newName.trim();
+  let image =
+    null;
 
 
-  if (trimmedName === "") {
+  if (
+    pendingPhoto
+  ) {
+
+    image =
+      pendingPhoto;
+
+  } else if (
+    !photoRemoved
+  ) {
+
+    image =
+      getRewardImage(
+        editingReward
+      );
+
+  }
+
+
+  if (image) {
+
+    preview.innerHTML = `
+
+      <img
+        src="${image}"
+        alt="Reward preview"
+      >
+
+    `;
+
+    return;
+
+  }
+
+
+  preview.innerHTML = `
+
+    <div class="preview-icon">
+      ${editingReward.icon || "🎁"}
+    </div>
+
+  `;
+
+}
+
+
+
+/* =====================================================
+   CHOOSE PHOTO
+===================================================== */
+
+function chooseRewardPhoto() {
+
+  const input =
+    document.getElementById(
+      "rewardPhotoInput"
+    );
+
+
+  input.value = "";
+
+
+  input.click();
+
+}
+
+
+
+/* =====================================================
+   PHOTO INPUT
+===================================================== */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function () {
+
+    const input =
+      document.getElementById(
+        "rewardPhotoInput"
+      );
+
+
+    if (!input) {
+      return;
+    }
+
+
+    input.addEventListener(
+      "change",
+      function () {
+
+        const file =
+          input.files[0];
+
+
+        if (!file) {
+          return;
+        }
+
+
+        if (
+          !file.type.startsWith(
+            "image/"
+          )
+        ) {
+
+          showToast(
+            "Please choose an image."
+          );
+
+          return;
+
+        }
+
+
+        const reader =
+          new FileReader();
+
+
+        reader.onload =
+          function (event) {
+
+            pendingPhoto =
+              event.target.result;
+
+
+            photoRemoved =
+              false;
+
+
+            renderEditPhoto();
+
+          };
+
+
+        reader.onerror =
+          function () {
+
+            showToast(
+              "Unable to read this photo."
+            );
+
+          };
+
+
+        reader.readAsDataURL(
+          file
+        );
+
+      }
+    );
+
+  }
+);
+
+
+
+/* =====================================================
+   REMOVE PHOTO
+===================================================== */
+
+function removeRewardPhoto() {
+
+  if (!editingReward) {
+    return;
+  }
+
+
+  pendingPhoto =
+    null;
+
+
+  photoRemoved =
+    true;
+
+
+  renderEditPhoto();
+
+}
+
+
+
+/* =====================================================
+   SAVE EDITED REWARD
+===================================================== */
+
+function saveEditedReward() {
+
+  if (!editingReward) {
+    return;
+  }
+
+
+  const id =
+    editingReward.id;
+
+
+  const nameInput =
+    document.getElementById(
+      "editRewardName"
+    );
+
+
+  const costInput =
+    document.getElementById(
+      "editRewardCost"
+    );
+
+
+  const newName =
+    nameInput.value.trim();
+
+
+  const newCost =
+    Number(
+      costInput.value
+    );
+
+
+  if (
+    newName === ""
+  ) {
 
     showToast(
-      "Name cannot be empty."
+      "Reward name cannot be empty."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    !Number.isFinite(
+      newCost
+    ) ||
+    newCost < 0 ||
+    !Number.isInteger(
+      newCost
+    )
+  ) {
+
+    showToast(
+      "Please enter a whole number for points."
     );
 
     return;
@@ -359,144 +793,48 @@ function editRewardName(id) {
 
 
   saveRewardName(
-    reward.id,
-    trimmedName
+    id,
+    newName
   );
+
+
+  saveRewardCost(
+    id,
+    newCost
+  );
+
+
+  if (pendingPhoto) {
+
+    saveRewardImage(
+      id,
+      pendingPhoto
+    );
+
+  }
+
+
+  if (photoRemoved) {
+
+    removeSavedRewardImage(
+      id
+    );
+
+  }
+
+
+  closeEditReward();
 
 
   renderProducts();
 
 
   showToast(
-    "Reward name updated."
+    "Reward updated successfully."
   );
 
 }
 
-
-/* =====================================================
-   CHANGE REWARD PHOTO
-===================================================== */
-
-function changeRewardImage(id) {
-
-  const reward =
-    rewards.find(
-      reward => reward.id === id
-    );
-
-  if (!reward) {
-    return;
-  }
-
-
-  const input =
-    document.createElement("input");
-
-  input.type = "file";
-
-  input.accept =
-    "image/*";
-
-
-  input.style.display =
-    "none";
-
-
-  input.addEventListener(
-    "change",
-    function () {
-
-      const file =
-        input.files[0];
-
-      if (!file) {
-        return;
-      }
-
-
-      /*
-        Only allow image files.
-      */
-
-      if (
-        !file.type.startsWith("image/")
-      ) {
-
-        showToast(
-          "Please choose an image."
-        );
-
-        return;
-
-      }
-
-
-      /*
-        Read the photo and save it
-        directly in the browser.
-      */
-
-      const reader =
-        new FileReader();
-
-
-      reader.onload =
-        function (event) {
-
-          const imageData =
-            event.target.result;
-
-
-          saveRewardImage(
-            reward.id,
-            imageData
-          );
-
-
-          renderProducts();
-
-
-          showToast(
-            "Photo updated."
-          );
-
-        };
-
-
-      reader.onerror =
-        function () {
-
-          showToast(
-            "Unable to read this photo."
-          );
-
-        };
-
-
-      reader.readAsDataURL(file);
-
-    }
-  );
-
-
-  document.body.appendChild(input);
-
-  input.click();
-
-
-  /*
-    Remove the temporary file input
-    after selecting the photo.
-  */
-
-  setTimeout(() => {
-
-    input.remove();
-
-  }, 1000);
-
-}
 
 
 /* =====================================================
@@ -506,14 +844,21 @@ function changeRewardImage(id) {
 function renderProducts() {
 
   const grid =
-    document.getElementById("productGrid");
+    document.getElementById(
+      "productGrid"
+    );
+
 
   let visibleRewards;
 
 
-  if (activeCategory === "All") {
+  if (
+    activeCategory ===
+    "All"
+  ) {
 
-    visibleRewards = rewards;
+    visibleRewards =
+      rewards;
 
   } else {
 
@@ -529,111 +874,152 @@ function renderProducts() {
 
   grid.innerHTML =
     visibleRewards
-      .map(reward => {
+      .map(
+        reward => {
 
-        const canRedeem =
-          balance >= reward.cost;
-
-
-        const rewardName =
-          getRewardName(reward);
-
-
-        const rewardImage =
-          getRewardImage(reward);
+          const rewardName =
+            getRewardName(
+              reward
+            );
 
 
-        return `
-
-          <article class="card">
-
-            <div class="product-image">
-
-              ${
-                rewardImage
-
-                  ? `
-                    <img
-                      src="${rewardImage}"
-                      alt="${rewardName}"
-                    >
-                  `
-
-                  : `
-                    <div class="product-icon">
-                      ${reward.icon || ""}
-                    </div>
-                  `
-              }
-
-            </div>
+          const rewardImage =
+            getRewardImage(
+              reward
+            );
 
 
-            <div class="product-content">
+          const rewardCost =
+            getRewardCost(
+              reward
+            );
 
-              <div class="product-name">
-                ${rewardName}
+
+          const canRedeem =
+            balance >=
+            rewardCost;
+
+
+          return `
+
+            <article
+              class="card"
+            >
+
+
+              <div
+                class="product-image"
+              >
+
+                ${
+                  rewardImage
+
+                    ? `
+
+                      <img
+                        src="${rewardImage}"
+                        alt="${rewardName}"
+                      >
+
+                    `
+
+                    : `
+
+                      <div
+                        class="product-icon"
+                      >
+                        ${
+                          reward.icon ||
+                          ""
+                        }
+                      </div>
+
+                    `
+                }
+
               </div>
 
 
-              <div class="product-cost">
-                ${reward.cost.toLocaleString()}
-                points
+
+              <div
+                class="product-content"
+              >
+
+
+                <div
+                  class="product-name"
+                >
+                  ${rewardName}
+                </div>
+
+
+                <div
+                  class="product-cost"
+                >
+
+                  ${
+                    rewardCost.toLocaleString()
+                  }
+
+                  points
+
+                </div>
+
+
+
+                <button
+                  class="redeem-button"
+                  ${
+                    canRedeem
+                      ? ""
+                      : "disabled"
+                  }
+                  onclick="openRedeem(${reward.id})"
+                >
+
+                  ${
+                    canRedeem
+                      ? "Redeem"
+                      : "Not enough points"
+                  }
+
+                </button>
+
+
+
+                <button
+                  class="edit-name-button"
+                  onclick="openEditReward(${reward.id})"
+                >
+                  ⚙️ Edit Reward
+                </button>
+
+
               </div>
 
+            </article>
 
-              <button
-                class="redeem-button"
-                ${
-                  canRedeem
-                    ? ""
-                    : "disabled"
-                }
-                onclick="openRedeem(${reward.id})"
-              >
-                ${
-                  canRedeem
-                    ? "Redeem"
-                    : "Not enough points"
-                }
-              </button>
+          `;
 
-
-              <button
-                class="edit-name-button"
-                onclick="editRewardName(${reward.id})"
-              >
-                ✏️ Edit name
-              </button>
-
-
-              <button
-                class="edit-name-button"
-                onclick="changeRewardImage(${reward.id})"
-              >
-                📷 Change photo
-              </button>
-
-            </div>
-
-          </article>
-
-        `;
-
-      })
+        }
+      )
       .join("");
 
 }
 
 
+
 /* =====================================================
-   UPDATE BALANCE DISPLAY
+   UPDATE BALANCE
 ===================================================== */
 
 function updateBalanceDisplay() {
 
   const pointsElement =
-    document.getElementById("points");
+    document.getElementById(
+      "points"
+    );
+
 
   if (!pointsElement) {
     return;
@@ -646,13 +1032,18 @@ function updateBalanceDisplay() {
 }
 
 
+
 /* =====================================================
    CATEGORY
 ===================================================== */
 
-function setCategory(category) {
+function setCategory(
+  category
+) {
 
-  activeCategory = category;
+  activeCategory =
+    category;
+
 
   renderFilters();
 
@@ -661,15 +1052,17 @@ function setCategory(category) {
 }
 
 
+
 /* =====================================================
-   OPEN REDEEM MODAL
+   OPEN REDEEM
 ===================================================== */
 
 function openRedeem(id) {
 
   selectedReward =
     rewards.find(
-      reward => reward.id === id
+      reward =>
+        reward.id === id
     );
 
 
@@ -679,7 +1072,15 @@ function openRedeem(id) {
 
 
   const rewardName =
-    getRewardName(selectedReward);
+    getRewardName(
+      selectedReward
+    );
+
+
+  const rewardCost =
+    getRewardCost(
+      selectedReward
+    );
 
 
   document.getElementById(
@@ -692,13 +1093,13 @@ function openRedeem(id) {
     "modalDescription"
   ).textContent =
     `This reward costs ${
-      selectedReward.cost.toLocaleString()
+      rewardCost.toLocaleString()
     } points.`;
 
 
   const afterBalance =
     balance -
-    selectedReward.cost;
+    rewardCost;
 
 
   document.getElementById(
@@ -706,15 +1107,19 @@ function openRedeem(id) {
   ).innerHTML = `
 
     Current balance:
+
     <strong>
-      ${balance.toLocaleString()} pts
+      ${balance.toLocaleString()}
+      pts
     </strong>
 
     <br>
 
     After redemption:
+
     <strong>
-      ${afterBalance.toLocaleString()} pts
+      ${afterBalance.toLocaleString()}
+      pts
     </strong>
 
   `;
@@ -728,8 +1133,9 @@ function openRedeem(id) {
 }
 
 
+
 /* =====================================================
-   CLOSE MODAL
+   CLOSE REDEEM
 ===================================================== */
 
 function closeModal() {
@@ -740,9 +1146,11 @@ function closeModal() {
     "none";
 
 
-  selectedReward = null;
+  selectedReward =
+    null;
 
 }
+
 
 
 /* =====================================================
@@ -756,16 +1164,24 @@ function confirmRedeem() {
   }
 
 
+  const rewardCost =
+    getRewardCost(
+      selectedReward
+    );
+
+
   if (
     balance <
-    selectedReward.cost
+    rewardCost
   ) {
 
     closeModal();
 
+
     showToast(
       "Not enough points."
     );
+
 
     return;
 
@@ -773,11 +1189,13 @@ function confirmRedeem() {
 
 
   balance -=
-    selectedReward.cost;
+    rewardCost;
 
 
   const rewardName =
-    getRewardName(selectedReward);
+    getRewardName(
+      selectedReward
+    );
 
 
   redemptionHistory.push({
@@ -786,10 +1204,11 @@ function confirmRedeem() {
       rewardName,
 
     cost:
-      selectedReward.cost,
+      rewardCost,
 
     date:
-      new Date().toLocaleDateString()
+      new Date()
+        .toLocaleDateString()
 
   });
 
@@ -797,7 +1216,6 @@ function confirmRedeem() {
   saveBalance();
 
   saveHistory();
-
 
   updateBalanceDisplay();
 
@@ -814,11 +1232,14 @@ function confirmRedeem() {
 }
 
 
+
 /* =====================================================
    TOAST
 ===================================================== */
 
-function showToast(message) {
+function showToast(
+  message
+) {
 
   const toast =
     document.getElementById(
@@ -835,15 +1256,19 @@ function showToast(message) {
   );
 
 
-  setTimeout(() => {
+  setTimeout(
+    () => {
 
-    toast.classList.remove(
-      "show"
-    );
+      toast.classList.remove(
+        "show"
+      );
 
-  }, 2400);
+    },
+    2400
+  );
 
 }
+
 
 
 /* =====================================================
@@ -853,12 +1278,14 @@ function showToast(message) {
 function showHistory() {
 
   if (
-    redemptionHistory.length === 0
+    redemptionHistory.length ===
+    0
   ) {
 
     showToast(
       "No redemption history yet."
     );
+
 
     return;
 
@@ -879,6 +1306,7 @@ function showHistory() {
   );
 
 }
+
 
 
 /* =====================================================
