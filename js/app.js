@@ -1,4 +1,4 @@
-```javascript
+javascript
 /* =====================================================
    SUPABASE CONFIG
 ===================================================== */
@@ -668,4 +668,4 @@ function showHistory() {
 updateBalanceDisplay();
 
 loadRewards();
-```
+
