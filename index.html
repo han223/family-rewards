@@ -1,15 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
   <title>Family Rewards</title>
-<link
+
+  <link
     rel="stylesheet"
     href="css/style.css"
-  >
+  />
+
 </head>
-  
+
 
 <body>
 
@@ -19,13 +28,17 @@
 
   <div id="app">
 
-    <!-- Header -->
+
+    <!-- =========================
+         HEADER
+    ========================= -->
 
     <header>
 
       <div class="brand">
         Family Rewards
       </div>
+
 
       <div class="account">
 
@@ -36,13 +49,17 @@
           </div>
 
           <div class="points">
+
             <strong id="points">
               2,450
             </strong>
+
             points
+
           </div>
 
         </div>
+
 
         <div class="avatar">
           A
@@ -53,11 +70,15 @@
     </header>
 
 
-    <!-- Main -->
+
+    <!-- =========================
+         MAIN
+    ========================= -->
 
     <main>
 
-      <!-- Hero -->
+
+      <!-- HERO -->
 
       <section class="hero">
 
@@ -73,6 +94,7 @@
 
         </div>
 
+
         <button
           class="history-button"
           onclick="showHistory()"
@@ -83,7 +105,8 @@
       </section>
 
 
-      <!-- Categories -->
+
+      <!-- CATEGORIES -->
 
       <nav
         class="filters"
@@ -91,20 +114,23 @@
       ></nav>
 
 
-      <!-- Products -->
+
+      <!-- PRODUCTS -->
 
       <section
         class="grid"
         id="productGrid"
       ></section>
 
+
     </main>
 
   </div>
 
 
+
   <!-- =========================
-       Redeem Modal
+       REDEEM MODAL
   ========================= -->
 
   <div
@@ -118,21 +144,27 @@
         Redeem reward?
       </h2>
 
+
       <p
         class="modal-description"
         id="modalDescription"
       ></p>
+
 
       <div
         class="balance-box"
         id="modalBalance"
       ></div>
 
+
       <div class="modal-buttons">
 
-        <button onclick="closeModal()">
+        <button
+          onclick="closeModal()"
+        >
           Cancel
         </button>
+
 
         <button
           class="confirm"
@@ -148,7 +180,167 @@
   </div>
 
 
-  <!-- Toast -->
+
+  <!-- =========================
+       EDIT REWARD MODAL
+  ========================= -->
+
+  <div
+    class="overlay"
+    id="editOverlay"
+  >
+
+    <div class="edit-modal">
+
+      <div class="edit-modal-header">
+
+        <div>
+
+          <h2>
+            Edit Reward
+          </h2>
+
+          <p>
+            Update this reward's information.
+          </p>
+
+        </div>
+
+
+        <button
+          class="close-edit-button"
+          onclick="closeEditReward()"
+          aria-label="Close"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+
+      <!-- NAME -->
+
+      <div class="edit-field">
+
+        <label for="editRewardName">
+          Reward name
+        </label>
+
+        <input
+          id="editRewardName"
+          type="text"
+          placeholder="Reward name"
+        />
+
+      </div>
+
+
+
+      <!-- POINTS -->
+
+      <div class="edit-field">
+
+        <label for="editRewardCost">
+          Points required
+        </label>
+
+        <input
+          id="editRewardCost"
+          type="number"
+          min="0"
+          step="1"
+          placeholder="Points"
+        />
+
+      </div>
+
+
+
+      <!-- PHOTO -->
+
+      <div class="edit-field">
+
+        <label>
+          Reward photo
+        </label>
+
+
+        <div
+          class="edit-photo-area"
+          id="editPhotoArea"
+        >
+
+          <div
+            class="edit-photo-preview"
+            id="editPhotoPreview"
+          >
+          </div>
+
+        </div>
+
+
+        <div class="photo-actions">
+
+          <button
+            class="secondary-button"
+            onclick="chooseRewardPhoto()"
+          >
+            📷 Change photo
+          </button>
+
+
+          <button
+            class="secondary-button danger-button"
+            onclick="removeRewardPhoto()"
+          >
+            Remove photo
+          </button>
+
+        </div>
+
+
+        <input
+          type="file"
+          id="rewardPhotoInput"
+          accept="image/*"
+          hidden
+        />
+
+      </div>
+
+
+
+      <!-- BUTTONS -->
+
+      <div class="edit-modal-buttons">
+
+        <button
+          class="cancel-edit-button"
+          onclick="closeEditReward()"
+        >
+          Cancel
+        </button>
+
+
+        <button
+          class="save-edit-button"
+          onclick="saveEditedReward()"
+        >
+          Save changes
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =========================
+       TOAST
+  ========================= -->
 
   <div
     class="toast"
@@ -157,7 +349,12 @@
 
 
 
-<script src="js/app.js"></script>
+  <!-- =========================
+       JAVASCRIPT
+  ========================= -->
+
+  <script src="js/app.js"></script>
 
 </body>
+
 </html>
