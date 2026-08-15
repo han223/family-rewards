@@ -2,10 +2,10 @@ const rewards = [
 
   {
     id: 1,
-    name: "Movie Night",
-    cost: 500,
-    category: "Entertainment",
-    icon: "🎬"
+  name: "Movie Night",
+  cost: 500,
+  category: "Entertainment",
+  image: "assets/images/movie-night.jpg"
   },
 
   {
@@ -219,10 +219,13 @@ function renderProducts() {
         return `
 
           <article class="card">
-
             <div class="product-image">
-              ${reward.icon}
-            </div>
+              ${
+                reward.image
+                  ? `<img src="${reward.image}" alt="${reward.name}">`
+                  : reward.icon || ""
+                }
+                </div>
 
             <div class="product-content">
 
