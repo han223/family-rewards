@@ -134,6 +134,16 @@ const savedNames =
 
 
 /* =====================================================
+   SAVED PRODUCT PHOTOS
+===================================================== */
+
+const savedImages =
+  JSON.parse(
+    localStorage.getItem("familyRewardsImages") || "{}"
+  );
+
+
+/* =====================================================
    BALANCE
 ===================================================== */
 
@@ -181,6 +191,21 @@ function getRewardName(reward) {
 
 
 /* =====================================================
+   GET PRODUCT IMAGE
+===================================================== */
+
+function getRewardImage(reward) {
+
+  return (
+    savedImages[reward.id] ||
+    reward.image ||
+    null
+  );
+
+}
+
+
+/* =====================================================
    SAVE PRODUCT NAME
 ===================================================== */
 
@@ -191,6 +216,22 @@ function saveRewardName(id, name) {
   localStorage.setItem(
     "familyRewardsNames",
     JSON.stringify(savedNames)
+  );
+
+}
+
+
+/* =====================================================
+   SAVE PRODUCT IMAGE
+===================================================== */
+
+function saveRewardImage(id, imageData) {
+
+  savedImages[id] = imageData;
+
+  localStorage.setItem(
+    "familyRewardsImages",
+    JSON.stringify(savedImages)
   );
 
 }
@@ -334,6 +375,131 @@ function editRewardName(id) {
 
 
 /* =====================================================
+   CHANGE REWARD PHOTO
+===================================================== */
+
+function changeRewardImage(id) {
+
+  const reward =
+    rewards.find(
+      reward => reward.id === id
+    );
+
+  if (!reward) {
+    return;
+  }
+
+
+  const input =
+    document.createElement("input");
+
+  input.type = "file";
+
+  input.accept =
+    "image/*";
+
+
+  input.style.display =
+    "none";
+
+
+  input.addEventListener(
+    "change",
+    function () {
+
+      const file =
+        input.files[0];
+
+      if (!file) {
+        return;
+      }
+
+
+      /*
+        Only allow image files.
+      */
+
+      if (
+        !file.type.startsWith("image/")
+      ) {
+
+        showToast(
+          "Please choose an image."
+        );
+
+        return;
+
+      }
+
+
+      /*
+        Read the photo and save it
+        directly in the browser.
+      */
+
+      const reader =
+        new FileReader();
+
+
+      reader.onload =
+        function (event) {
+
+          const imageData =
+            event.target.result;
+
+
+          saveRewardImage(
+            reward.id,
+            imageData
+          );
+
+
+          renderProducts();
+
+
+          showToast(
+            "Photo updated."
+          );
+
+        };
+
+
+      reader.onerror =
+        function () {
+
+          showToast(
+            "Unable to read this photo."
+          );
+
+        };
+
+
+      reader.readAsDataURL(file);
+
+    }
+  );
+
+
+  document.body.appendChild(input);
+
+  input.click();
+
+
+  /*
+    Remove the temporary file input
+    after selecting the photo.
+  */
+
+  setTimeout(() => {
+
+    input.remove();
+
+  }, 1000);
+
+}
+
+
+/* =====================================================
    RENDER PRODUCTS
 ===================================================== */
 
@@ -373,6 +539,10 @@ function renderProducts() {
           getRewardName(reward);
 
 
+        const rewardImage =
+          getRewardImage(reward);
+
+
         return `
 
           <article class="card">
@@ -380,11 +550,11 @@ function renderProducts() {
             <div class="product-image">
 
               ${
-                reward.image
+                rewardImage
 
                   ? `
                     <img
-                      src="${reward.image}"
+                      src="${rewardImage}"
                       alt="${rewardName}"
                     >
                   `
@@ -434,6 +604,14 @@ function renderProducts() {
                 onclick="editRewardName(${reward.id})"
               >
                 ✏️ Edit name
+              </button>
+
+
+              <button
+                class="edit-name-button"
+                onclick="changeRewardImage(${reward.id})"
+              >
+                📷 Change photo
               </button>
 
             </div>
@@ -616,14 +794,10 @@ function confirmRedeem() {
   });
 
 
-  /* Save everything */
-
   saveBalance();
 
   saveHistory();
 
-
-  /* Update screen */
 
   updateBalanceDisplay();
 
