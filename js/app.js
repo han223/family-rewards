@@ -6,8 +6,10 @@ const SUPABASE_URL = "https://omvmjspbrugjjlerrkrf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_2cz1Ovi8mEhXTft6UfHXoQ_uXSF8bn4";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const IMAGE_BUCKET = "product-images";
+const SELECTED_PROFILE_KEY = "familyRewardsSelectedProfile";
 
 let rewards = [];
+let profiles = [];
 let activeCategory = "All";
 let selectedReward = null;
 let editingReward = null;
@@ -33,164 +35,228 @@ function getImageUrl(image) {
   return supabaseClient.storage.from(IMAGE_BUCKET).getPublicUrl(image).data?.publicUrl || null;
 }
 
-function showLoginScreen() {
-  const login = document.getElementById("loginScreen");
-  const app = document.getElementById("app");
-  if (login) login.style.display = "flex";
-  if (app) app.style.display = "none";
+function getProfileName(profile) {
+  return profile?.name || "Family Member";
 }
 
-function showAppScreen() {
-  const login = document.getElementById("loginScreen");
-  const app = document.getElementById("app");
-  if (login) login.style.display = "none";
-  if (app) app.style.display = "block";
+function isParent() {
+  return String(currentProfile?.role || "").toLowerCase() === "parent";
 }
 
-function setLoginError(message) {
-  const element = document.getElementById("loginError");
-  if (element) element.textContent = message || "";
-}
+/* =====================================================
+   ACCOUNT SWITCHER
+===================================================== */
 
-async function login(event) {
-  event.preventDefault();
-  const email = document.getElementById("loginEmail")?.value.trim();
-  const password = document.getElementById("loginPassword")?.value;
-  const button = document.getElementById("loginButton");
-  setLoginError("");
-  if (button) { button.disabled = true; button.textContent = "Logging in..."; }
-  const result = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (result.error) {
-    console.error("Login error:", result.error);
-    setLoginError(result.error.message || "Unable to log in.");
-    if (button) { button.disabled = false; button.textContent = "Log in"; }
-    return;
-  }
-  await startAuthenticatedApp(result.data.user);
-  if (button) { button.disabled = false; button.textContent = "Log in"; }
-}
-
-async function logout() {
-  await supabaseClient.auth.signOut();
-  dataLoaded = false;
-  rewards = [];
-  redemptionHistory = [];
-  balance = 0;
-  currentProfile = null;
-  showLoginScreen();
-}
-
-async function getCurrentProfile(user) {
-  if (!user) return null;
+async function loadProfiles() {
   const result = await supabaseClient
     .from("profiles")
-    .select("id,name,balance,role,auth_user_id")
-    .eq("auth_user_id", user.id)
-    .single();
+    .select("id,name,balance,role")
+    .order("id", { ascending: true });
+
   if (result.error) {
-    console.error("Profile load error:", result.error);
-    return null;
+    console.error("Profiles load error:", result.error);
+    showToast("Unable to load family accounts.");
+    return false;
   }
-  return result.data;
+
+  profiles = result.data || [];
+
+  if (profiles.length === 0) {
+    showToast("No family accounts found.");
+    return false;
+  }
+
+  const savedId = Number(localStorage.getItem(SELECTED_PROFILE_KEY));
+  const savedProfile = profiles.find(profile => profile.id === savedId);
+  currentProfile = savedProfile || profiles[0];
+  localStorage.setItem(SELECTED_PROFILE_KEY, String(currentProfile.id));
+
+  return true;
 }
 
-async function startAuthenticatedApp(user) {
-  showAppScreen();
-  setLoginError("");
-  const profile = await getCurrentProfile(user);
-  if (!profile) {
-    showLoginScreen();
-    setLoginError("Login succeeded, but your Family Rewards profile could not be loaded.");
-    return;
-  }
+function renderAccountMenu() {
+  const list = document.getElementById("accountList");
+  if (!list) return;
+
+  list.innerHTML = profiles.map(profile => {
+    const active = currentProfile && profile.id === currentProfile.id;
+    const role = profile.role === "parent" ? "Parent" : "Child";
+    const initial = escapeHtml(getProfileName(profile).charAt(0).toUpperCase());
+
+    return `
+      <button class="account-option ${active ? "active" : ""}" onclick="switchProfile(${profile.id})">
+        <span class="account-option-avatar">${initial}</span>
+        <span class="account-option-info">
+          <strong>${escapeHtml(getProfileName(profile))}</strong>
+          <small>${role} · ${Number(profile.balance || 0).toLocaleString()} pts</small>
+        </span>
+        ${active ? "<span>✓</span>" : ""}
+      </button>
+    `;
+  }).join("");
+}
+
+function toggleAccountMenu() {
+  const menu = document.getElementById("accountMenu");
+  const button = document.getElementById("accountSwitcher");
+  if (!menu) return;
+
+  const open = menu.style.display !== "none";
+  menu.style.display = open ? "none" : "block";
+  if (button) button.setAttribute("aria-expanded", String(!open));
+  if (!open) renderAccountMenu();
+}
+
+function closeAccountMenu() {
+  const menu = document.getElementById("accountMenu");
+  const button = document.getElementById("accountSwitcher");
+  if (menu) menu.style.display = "none";
+  if (button) button.setAttribute("aria-expanded", "false");
+}
+
+async function switchProfile(id) {
+  const profile = profiles.find(item => item.id === Number(id));
+  if (!profile) return;
+
   currentProfile = profile;
-  const userName = profile.name || user.email?.split("@")[0] || "User";
-  const userNameElement = document.getElementById("userName");
-  const avatarElement = document.getElementById("userAvatar");
-  if (userNameElement) userNameElement.textContent = userName;
-  if (avatarElement) avatarElement.textContent = userName.charAt(0).toUpperCase();
-  await initializeApp();
+  localStorage.setItem(SELECTED_PROFILE_KEY, String(profile.id));
+  closeAccountMenu();
+  await loadCloudData();
+  updateUserHeader();
+  renderProducts();
+  renderAccountMenu();
 }
 
-async function checkAuth() {
-  const result = await supabaseClient.auth.getSession();
-  if (result.error) {
-    console.error("Session error:", result.error);
-    showLoginScreen();
-    return;
-  }
-  if (result.data.session?.user) await startAuthenticatedApp(result.data.session.user);
-  else showLoginScreen();
+document.addEventListener("click", event => {
+  const account = document.querySelector(".account");
+  if (account && !account.contains(event.target)) closeAccountMenu();
+});
+
+function updateUserHeader() {
+  const name = getProfileName(currentProfile);
+  const nameElement = document.getElementById("userName");
+  const avatarElement = document.getElementById("userAvatar");
+
+  if (nameElement) nameElement.textContent = name;
+  if (avatarElement) avatarElement.textContent = name.charAt(0).toUpperCase();
+  updateBalanceDisplay();
 }
+
+/* =====================================================
+   CLOUD DATA
+===================================================== */
 
 async function loadCloudData() {
   if (!currentProfile) return false;
+
   const profileResult = await supabaseClient
     .from("profiles")
-    .select("id,name,balance,role,auth_user_id")
+    .select("id,name,balance,role")
     .eq("id", currentProfile.id)
-    .eq("auth_user_id", currentProfile.auth_user_id)
     .single();
+
   if (profileResult.error) {
     console.error("Profile load error:", profileResult.error);
-    showToast("Unable to load points from cloud.");
+    showToast("Unable to load this family's points.");
     return false;
   }
+
   currentProfile = profileResult.data;
   balance = Number(currentProfile.balance || 0);
+
   const historyResult = await supabaseClient
     .from("redemptions")
     .select("id,user_id,reward_id,reward_name,cost,created_at")
     .eq("user_id", currentProfile.id)
     .order("created_at", { ascending: false });
+
   if (historyResult.error) {
     console.error("Redemption history load error:", historyResult.error);
     showToast("Unable to load redemption history.");
     return false;
   }
+
   redemptionHistory = historyResult.data || [];
   dataLoaded = true;
-  updateBalanceDisplay();
+  updateUserHeader();
   return true;
 }
 
 async function loadRewards() {
-  console.log("Loading rewards from Supabase...");
-  const result = await supabaseClient.from("rewards").select("id,name,cost,category,image,icon").order("id", { ascending: true });
+  const result = await supabaseClient
+    .from("rewards")
+    .select("id,name,cost,category,image,icon")
+    .order("id", { ascending: true });
+
   if (result.error) {
-    console.error("Supabase error:", result.error);
+    console.error("Rewards load error:", result.error);
     const grid = document.getElementById("productGrid");
     if (grid) grid.innerHTML = "<p style='padding:40px'>Unable to load rewards. Check the browser Console.</p>";
     return;
   }
+
   rewards = result.data || [];
   renderFilters();
   renderProducts();
 }
 
+/* =====================================================
+   FILTERS + PRODUCTS
+===================================================== */
+
 function renderFilters() {
   const container = document.getElementById("filters");
   if (!container) return;
+
   const categories = ["All", ...new Set(rewards.map(reward => reward.category).filter(Boolean))];
-  container.innerHTML = categories.map(category => `<button class="filter ${category === activeCategory ? "active" : ""}" onclick="setCategory('${escapeHtml(category)}')">${escapeHtml(category)}</button>`).join("");
+
+  container.innerHTML = categories.map(category => `
+    <button class="filter ${category === activeCategory ? "active" : ""}" onclick="setCategory('${escapeHtml(category)}')">
+      ${escapeHtml(category)}
+    </button>
+  `).join("");
 }
 
 function renderProducts() {
   const grid = document.getElementById("productGrid");
   if (!grid) return;
-  const visibleRewards = activeCategory === "All" ? rewards : rewards.filter(reward => reward.category === activeCategory);
+
+  const visibleRewards = activeCategory === "All"
+    ? rewards
+    : rewards.filter(reward => reward.category === activeCategory);
+
   if (visibleRewards.length === 0) {
     grid.innerHTML = "<p style='padding:40px'>No rewards found.</p>";
     return;
   }
+
   grid.innerHTML = visibleRewards.map(reward => {
     const image = getImageUrl(reward.image);
     const name = escapeHtml(reward.name);
     const cost = Number(reward.cost || 0);
     const icon = escapeHtml(reward.icon || "🎁");
     const canRedeem = dataLoaded && balance >= cost;
-    const imageHtml = image ? `<img src="${escapeHtml(image)}" alt="${name}">` : `<div class="product-icon">${icon}</div>`;
-    return `<article class="card"><div class="product-image">${imageHtml}</div><div class="product-content"><div class="product-name">${name}</div><div class="product-cost">${cost.toLocaleString()} points</div><button class="redeem-button" ${canRedeem ? "" : "disabled"} onclick="openRedeem(${reward.id})">${canRedeem ? "Redeem" : "Not enough points"}</button><button class="edit-name-button" onclick="openEditReward(${reward.id})">⚙️ Edit Reward</button></div></article>`;
+    const imageHtml = image
+      ? `<img src="${escapeHtml(image)}" alt="${name}">`
+      : `<div class="product-icon">${icon}</div>`;
+
+    const editButton = isParent()
+      ? `<button class="edit-name-button" onclick="openEditReward(${reward.id})">⚙️ Edit Reward</button>`
+      : "";
+
+    return `
+      <article class="card">
+        <div class="product-image">${imageHtml}</div>
+        <div class="product-content">
+          <div class="product-name">${name}</div>
+          <div class="product-cost">${cost.toLocaleString()} points</div>
+          <button class="redeem-button" ${canRedeem ? "" : "disabled"} onclick="openRedeem(${reward.id})">
+            ${canRedeem ? "Redeem" : "Not enough points"}
+          </button>
+          ${editButton}
+        </div>
+      </article>
+    `;
   }).join("");
 }
 
@@ -205,15 +271,22 @@ function updateBalanceDisplay() {
   if (element) element.textContent = balance.toLocaleString();
 }
 
+/* =====================================================
+   REDEEM
+===================================================== */
+
 function openRedeem(id) {
   selectedReward = rewards.find(reward => reward.id === id);
   if (!selectedReward || !dataLoaded) return;
+
   const name = selectedReward.name;
   const cost = Number(selectedReward.cost || 0);
+
   if (balance < cost) {
     showToast("Not enough points.");
     return;
   }
+
   document.getElementById("modalTitle").textContent = `Redeem ${name}?`;
   document.getElementById("modalDescription").textContent = `This reward costs ${cost.toLocaleString()} points.`;
   document.getElementById("modalBalance").innerHTML = `Current balance: <strong>${balance.toLocaleString()} pts</strong><br>After redemption: <strong>${(balance - cost).toLocaleString()} pts</strong>`;
@@ -227,44 +300,90 @@ function closeModal() {
 
 async function confirmRedeem() {
   if (!selectedReward || !dataLoaded || !currentProfile) return;
+
   const cost = Number(selectedReward.cost || 0);
-  if (balance < cost) { closeModal(); showToast("Not enough points."); return; }
+  if (balance < cost) {
+    closeModal();
+    showToast("Not enough points.");
+    return;
+  }
+
   const newBalance = balance - cost;
   const rewardName = selectedReward.name;
   const confirmButton = document.querySelector("#overlay .confirm");
-  if (confirmButton) { confirmButton.disabled = true; confirmButton.textContent = "Redeeming..."; }
+
+  if (confirmButton) {
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Redeeming...";
+  }
+
   try {
-    const profileUpdate = await supabaseClient.from("profiles").update({ balance: newBalance }).eq("id", currentProfile.id).eq("auth_user_id", currentProfile.auth_user_id);
+    const profileUpdate = await supabaseClient
+      .from("profiles")
+      .update({ balance: newBalance })
+      .eq("id", currentProfile.id);
+
     if (profileUpdate.error) throw profileUpdate.error;
-    const historyInsert = await supabaseClient.from("redemptions").insert({ user_id: currentProfile.id, reward_id: selectedReward.id, reward_name: rewardName, cost: cost }).select().single();
+
+    const historyInsert = await supabaseClient
+      .from("redemptions")
+      .insert({
+        user_id: currentProfile.id,
+        reward_id: selectedReward.id,
+        reward_name: rewardName,
+        cost
+      })
+      .select()
+      .single();
+
     if (historyInsert.error) {
-      await supabaseClient.from("profiles").update({ balance: balance }).eq("id", currentProfile.id).eq("auth_user_id", currentProfile.auth_user_id);
+      await supabaseClient
+        .from("profiles")
+        .update({ balance })
+        .eq("id", currentProfile.id);
       throw historyInsert.error;
     }
+
     balance = newBalance;
     currentProfile.balance = newBalance;
     redemptionHistory.unshift(historyInsert.data);
-    updateBalanceDisplay();
+    updateUserHeader();
     closeModal();
     renderProducts();
+    renderAccountMenu();
     showToast(`${rewardName} redeemed successfully`);
   } catch (error) {
     console.error("Redeem error:", error);
     showToast(`Unable to redeem reward: ${error.message || error}`);
   } finally {
-    if (confirmButton) { confirmButton.disabled = false; confirmButton.textContent = "Redeem"; }
+    if (confirmButton) {
+      confirmButton.disabled = false;
+      confirmButton.textContent = "Redeem";
+    }
   }
 }
 
+/* =====================================================
+   EDIT REWARD — PARENT ONLY
+===================================================== */
+
 function openEditReward(id) {
+  if (!isParent()) {
+    showToast("Only Parent can edit rewards.");
+    return;
+  }
+
   editingReward = rewards.find(reward => reward.id === id);
   if (!editingReward) return;
+
   pendingPhotoFile = null;
   photoRemoved = false;
+
   const nameInput = document.getElementById("editRewardName");
   const costInput = document.getElementById("editRewardCost");
   if (nameInput) nameInput.value = editingReward.name || "";
   if (costInput) costInput.value = Number(editingReward.cost || 0);
+
   renderEditPhoto();
   document.getElementById("editOverlay").style.display = "flex";
 }
@@ -279,21 +398,29 @@ function closeEditReward() {
 function renderEditPhoto() {
   const preview = document.getElementById("editPhotoPreview");
   if (!preview || !editingReward) return;
+
   if (photoRemoved) {
     preview.innerHTML = `<div class="preview-icon">${escapeHtml(editingReward.icon || "🎁")}</div>`;
     return;
   }
+
   if (pendingPhotoFile) {
     const reader = new FileReader();
-    reader.onload = event => { preview.innerHTML = `<img src="${event.target.result}" alt="Reward preview">`; };
+    reader.onload = event => {
+      preview.innerHTML = `<img src="${event.target.result}" alt="Reward preview">`;
+    };
     reader.readAsDataURL(pendingPhotoFile);
     return;
   }
+
   const image = getImageUrl(editingReward.image);
-  preview.innerHTML = image ? `<img src="${escapeHtml(image)}" alt="Reward preview">` : `<div class="preview-icon">${escapeHtml(editingReward.icon || "🎁")}</div>`;
+  preview.innerHTML = image
+    ? `<img src="${escapeHtml(image)}" alt="Reward preview">`
+    : `<div class="preview-icon">${escapeHtml(editingReward.icon || "🎁")}</div>`;
 }
 
 function chooseRewardPhoto() {
+  if (!isParent()) return;
   const input = document.getElementById("rewardPhotoInput");
   if (!input) return;
   input.value = "";
@@ -301,16 +428,20 @@ function chooseRewardPhoto() {
 }
 
 function handlePhotoSelection(event) {
+  if (!isParent()) return;
   const file = event.target.files?.[0];
   if (!file) return;
-  if (!file.type.startsWith("image/")) { showToast("Please choose an image."); return; }
+  if (!file.type.startsWith("image/")) {
+    showToast("Please choose an image.");
+    return;
+  }
   pendingPhotoFile = file;
   photoRemoved = false;
   renderEditPhoto();
 }
 
 function removeRewardPhoto() {
-  if (!editingReward) return;
+  if (!isParent() || !editingReward) return;
   pendingPhotoFile = null;
   photoRemoved = true;
   renderEditPhoto();
@@ -319,7 +450,9 @@ function removeRewardPhoto() {
 async function uploadRewardPhoto(file, id) {
   const extension = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : "jpg";
   const path = `reward-${id}-${Date.now()}.${extension}`;
-  const upload = await supabaseClient.storage.from(IMAGE_BUCKET).upload(path, file, { upsert: false, contentType: file.type });
+  const upload = await supabaseClient.storage
+    .from(IMAGE_BUCKET)
+    .upload(path, file, { upsert: false, contentType: file.type });
   if (upload.error) throw upload.error;
   return path;
 }
@@ -331,24 +464,43 @@ async function deleteRewardPhoto(imagePath) {
 }
 
 async function saveEditedReward() {
-  if (!editingReward) return;
+  if (!isParent() || !editingReward) return;
+
   const id = editingReward.id;
   const oldImagePath = editingReward.image || null;
-  const nameInput = document.getElementById("editRewardName");
-  const costInput = document.getElementById("editRewardCost");
-  const newName = nameInput.value.trim();
-  const newCost = Number(costInput.value);
-  if (!newName) { showToast("Reward name cannot be empty."); return; }
-  if (!Number.isFinite(newCost) || newCost < 0 || !Number.isInteger(newCost)) { showToast("Please enter a whole number for points."); return; }
+  const newName = document.getElementById("editRewardName").value.trim();
+  const newCost = Number(document.getElementById("editRewardCost").value);
+
+  if (!newName) {
+    showToast("Reward name cannot be empty.");
+    return;
+  }
+
+  if (!Number.isFinite(newCost) || newCost < 0 || !Number.isInteger(newCost)) {
+    showToast("Please enter a whole number for points.");
+    return;
+  }
+
   const saveButton = document.querySelector(".save-edit-button");
-  if (saveButton) { saveButton.disabled = true; saveButton.textContent = "Saving..."; }
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+  }
+
   try {
     let imagePath = oldImagePath;
     if (pendingPhotoFile) imagePath = await uploadRewardPhoto(pendingPhotoFile, id);
     if (photoRemoved) imagePath = null;
-    const update = await supabaseClient.from("rewards").update({ name: newName, cost: newCost, image: imagePath }).eq("id", id);
+
+    const update = await supabaseClient
+      .from("rewards")
+      .update({ name: newName, cost: newCost, image: imagePath })
+      .eq("id", id);
+
     if (update.error) throw update.error;
+
     if (oldImagePath && imagePath !== oldImagePath) await deleteRewardPhoto(oldImagePath);
+
     closeEditReward();
     await loadRewards();
     showToast("Reward updated successfully.");
@@ -356,8 +508,28 @@ async function saveEditedReward() {
     console.error("Save reward error:", error);
     showToast(`Unable to save reward: ${error.message || error}`);
   } finally {
-    if (saveButton) { saveButton.disabled = false; saveButton.textContent = "Save changes"; }
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = "Save changes";
+    }
   }
+}
+
+/* =====================================================
+   HISTORY
+===================================================== */
+
+function showHistory() {
+  if (!dataLoaded || redemptionHistory.length === 0) {
+    showToast("No redemption history yet.");
+    return;
+  }
+
+  showToast(
+    redemptionHistory
+      .map(item => `${item.reward_name} (-${item.cost} pts)`)
+      .join(" • ")
+  );
 }
 
 function showToast(message) {
@@ -368,23 +540,25 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 2400);
 }
 
-function showHistory() {
-  if (!dataLoaded || redemptionHistory.length === 0) { showToast("No redemption history yet."); return; }
-  showToast(redemptionHistory.map(item => `${item.reward_name} (-${item.cost} pts)`).join(" • "));
-}
+/* =====================================================
+   INITIALIZE
+===================================================== */
 
 async function initializeApp() {
-  dataLoaded = false;
-  updateBalanceDisplay();
-  renderFilters();
-  renderProducts();
+  const profilesLoaded = await loadProfiles();
+  if (!profilesLoaded) return;
+
+  updateUserHeader();
+  renderAccountMenu();
+
   const cloudLoaded = await loadCloudData();
   if (!cloudLoaded) return;
+
   await loadRewards();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("rewardPhotoInput");
   if (input) input.addEventListener("change", handlePhotoSelection);
-  checkAuth();
+  initializeApp();
 });
