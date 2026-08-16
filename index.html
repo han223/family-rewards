@@ -1,366 +1,155 @@
-html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8" />
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Family Rewards</title>
-
-  <link
-    rel="stylesheet"
-    href="css/style.css"
-  />
-
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #f7f7f7;
+    }
+    .login-card {
+      width: min(420px, 100%);
+      background: #fff;
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.08);
+    }
+    .login-card h1 { margin: 0 0 8px; }
+    .login-card p { margin: 0 0 28px; color: #777; }
+    .login-field { margin-bottom: 16px; }
+    .login-field label { display:block; margin-bottom:7px; font-weight:600; }
+    .login-field input {
+      width:100%; box-sizing:border-box; padding:13px 14px;
+      border:1px solid #ddd; border-radius:10px; font-size:16px;
+    }
+    #loginButton {
+      width:100%; border:0; border-radius:10px; padding:13px;
+      font-size:16px; font-weight:600; cursor:pointer;
+    }
+    #loginError { min-height:20px; margin-top:14px; color:#c62828; font-size:14px; }
+    #app { display:none; }
+    .logout-button {
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 9px;
+      padding: 8px 12px;
+      cursor: pointer;
+      margin-left: 12px;
+    }
+  </style>
 </head>
-
-
 <body>
 
-  <!-- =========================
-       APP
-  ========================= -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <h1>Family Rewards</h1>
+      <p>Sign in to access your rewards store.</p>
+
+      <form id="loginForm">
+        <div class="login-field">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" type="email" autocomplete="email" required />
+        </div>
+
+        <div class="login-field">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" required />
+        </div>
+
+        <button id="loginButton" type="submit">Log in</button>
+        <div id="loginError"></div>
+      </form>
+    </div>
+  </div>
 
   <div id="app">
-
-
-    <!-- =========================
-         HEADER
-    ========================= -->
-
     <header>
-
-      <div class="brand">
-        Family Rewards
-      </div>
-
-
+      <div class="brand">Family Rewards</div>
       <div class="account">
-
         <div class="user-info">
-
-          <div class="user-name">
-            Alex
-          </div>
-
-          <div class="points">
-
-            <strong id="points">
-              2,450
-            </strong>
-
-            points
-
-          </div>
-
+          <div class="user-name" id="userName">Alex</div>
+          <div class="points"><strong id="points">2,450</strong> points</div>
         </div>
-
-
-        <div class="avatar">
-          A
-        </div>
-
+        <div class="avatar" id="userAvatar">A</div>
+        <button class="logout-button" onclick="logout()">Log out</button>
       </div>
-
     </header>
 
-
-
-    <!-- =========================
-         MAIN
-    ========================= -->
-
     <main>
-
-
-      <!-- HERO -->
-
       <section class="hero">
-
         <div>
-
-          <h1>
-            Rewards Store
-          </h1>
-
-          <p>
-            Choose something you've earned.
-          </p>
-
+          <h1>Rewards Store</h1>
+          <p>Choose something you've earned.</p>
         </div>
-
-
-        <button
-          class="history-button"
-          onclick="showHistory()"
-        >
-          Redemption History
-        </button>
-
+        <button class="history-button" onclick="showHistory()">Redemption History</button>
       </section>
 
-
-
-      <!-- CATEGORIES -->
-
-      <nav
-        class="filters"
-        id="filters"
-      ></nav>
-
-
-
-      <!-- PRODUCTS -->
-
-      <section
-        class="grid"
-        id="productGrid"
-      ></section>
-
-
+      <nav class="filters" id="filters"></nav>
+      <section class="grid" id="productGrid"></section>
     </main>
-
   </div>
 
-
-
-  <!-- =========================
-       REDEEM MODAL
-  ========================= -->
-
-  <div
-    class="overlay"
-    id="overlay"
-  >
-
+  <div class="overlay" id="overlay">
     <div class="modal">
-
-      <h2 id="modalTitle">
-        Redeem reward?
-      </h2>
-
-
-      <p
-        class="modal-description"
-        id="modalDescription"
-      ></p>
-
-
-      <div
-        class="balance-box"
-        id="modalBalance"
-      ></div>
-
-
+      <h2 id="modalTitle">Redeem reward?</h2>
+      <p class="modal-description" id="modalDescription"></p>
+      <div class="balance-box" id="modalBalance"></div>
       <div class="modal-buttons">
-
-        <button
-          onclick="closeModal()"
-        >
-          Cancel
-        </button>
-
-
-        <button
-          class="confirm"
-          onclick="confirmRedeem()"
-        >
-          Redeem
-        </button>
-
+        <button onclick="closeModal()">Cancel</button>
+        <button class="confirm" onclick="confirmRedeem()">Redeem</button>
       </div>
-
     </div>
-
   </div>
 
-
-
-  <!-- =========================
-       EDIT REWARD MODAL
-  ========================= -->
-
-  <div
-    class="overlay"
-    id="editOverlay"
-  >
-
+  <div class="overlay" id="editOverlay">
     <div class="edit-modal">
-
       <div class="edit-modal-header">
-
         <div>
-
-          <h2>
-            Edit Reward
-          </h2>
-
-          <p>
-            Update this reward's information.
-          </p>
-
+          <h2>Edit Reward</h2>
+          <p>Update this reward's information.</p>
         </div>
-
-
-        <button
-          class="close-edit-button"
-          onclick="closeEditReward()"
-          aria-label="Close"
-        >
-          ×
-        </button>
-
+        <button class="close-edit-button" onclick="closeEditReward()" aria-label="Close">×</button>
       </div>
 
-
-
-      <!-- NAME -->
-
       <div class="edit-field">
-
-        <label for="editRewardName">
-          Reward name
-        </label>
-
-        <input
-          id="editRewardName"
-          type="text"
-          placeholder="Reward name"
-        />
-
+        <label for="editRewardName">Reward name</label>
+        <input id="editRewardName" type="text" placeholder="Reward name" />
       </div>
 
-
-
-      <!-- POINTS -->
-
       <div class="edit-field">
-
-        <label for="editRewardCost">
-          Points required
-        </label>
-
-        <input
-          id="editRewardCost"
-          type="number"
-          min="0"
-          step="1"
-          placeholder="Points"
-        />
-
+        <label for="editRewardCost">Points required</label>
+        <input id="editRewardCost" type="number" min="0" step="1" placeholder="Points" />
       </div>
 
-
-
-      <!-- PHOTO -->
-
       <div class="edit-field">
-
-        <label>
-          Reward photo
-        </label>
-
-
-        <div
-          class="edit-photo-area"
-          id="editPhotoArea"
-        >
-
-          <div
-            class="edit-photo-preview"
-            id="editPhotoPreview"
-          >
-          </div>
-
+        <label>Reward photo</label>
+        <div class="edit-photo-area" id="editPhotoArea">
+          <div class="edit-photo-preview" id="editPhotoPreview"></div>
         </div>
-
-
         <div class="photo-actions">
-
-          <button
-            class="secondary-button"
-            onclick="chooseRewardPhoto()"
-          >
-            📷 Change photo
-          </button>
-
-
-          <button
-            class="secondary-button danger-button"
-            onclick="removeRewardPhoto()"
-          >
-            Remove photo
-          </button>
-
+          <button class="secondary-button" onclick="chooseRewardPhoto()">📷 Change photo</button>
+          <button class="secondary-button danger-button" onclick="removeRewardPhoto()">Remove photo</button>
         </div>
-
-
-        <input
-          type="file"
-          id="rewardPhotoInput"
-          accept="image/*"
-          hidden
-        />
-
+        <input type="file" id="rewardPhotoInput" accept="image/*" hidden />
       </div>
-
-
-
-      <!-- BUTTONS -->
 
       <div class="edit-modal-buttons">
-
-        <button
-          class="cancel-edit-button"
-          onclick="closeEditReward()"
-        >
-          Cancel
-        </button>
-
-
-        <button
-          class="save-edit-button"
-          onclick="saveEditedReward()"
-        >
-          Save changes
-        </button>
-
+        <button class="cancel-edit-button" onclick="closeEditReward()">Cancel</button>
+        <button class="save-edit-button" onclick="saveEditedReward()">Save changes</button>
       </div>
-
     </div>
-
   </div>
 
+  <div class="toast" id="toast"></div>
 
-
-  <!-- =========================
-       TOAST
-  ========================= -->
-
-  <div
-    class="toast"
-    id="toast"
-  ></div>
-
-
-
-  <!-- =========================
-       JAVASCRIPT
-  ========================= -->
-
-  <!-- Supabase JavaScript SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Family Rewards App -->
   <script src="js/app.js"></script>
-
 </body>
-
 </html>
-
