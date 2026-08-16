@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f6f7f5" />
   <title>Family Rewards</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-
   <div id="app">
     <header>
       <div class="brand">Family Rewards</div>
 
-      <div class="account" style="position:relative;">
-        <button class="account-switcher" id="accountSwitcher" type="button" onclick="toggleAccountMenu()" aria-expanded="false">
+      <div class="account">
+        <button class="account-switcher" id="accountSwitcher" type="button" onclick="toggleAccountMenu()" aria-expanded="false" aria-haspopup="true">
           <div class="user-info">
-            <div class="user-name" id="userName">Alex</div>
+            <div class="user-name" id="userName">Old Zhu</div>
             <div class="points"><strong id="points">0</strong> points</div>
           </div>
-          <div class="avatar" id="userAvatar">🐷</div>
-          <span style="font-size:12px; margin-left:4px;">▼</span>
+          <div class="avatar" id="userAvatar" aria-hidden="true">🐷</div>
+          <span class="account-chevron" aria-hidden="true">⌄</span>
         </button>
 
         <div id="accountMenu" class="account-menu" style="display:none;">
@@ -38,7 +38,7 @@
         <button class="history-button" onclick="showHistory()">Redemption History</button>
       </section>
 
-      <nav class="filters" id="filters"></nav>
+      <nav class="filters" id="filters" aria-label="Reward categories"></nav>
       <section class="grid" id="productGrid"></section>
     </main>
   </div>
@@ -99,32 +99,41 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/app.js"></script>
   <script>
-    /* Family account avatars */
+    // Keep account avatars consistent even when app.js switches profiles.
     (function () {
       const avatarFor = (name) => {
-        const value = String(name || "").toLowerCase().trim();
+        const value = String(name || "").trim().toLowerCase();
         if (value === "饲养员") return "🌙";
         if (value === "old zhu") return "🐷";
         if (value === "shit") return "💩";
         return "👤";
       };
 
-      function refreshAvatars() {
+      const applyAvatar = (element, name) => {
+        if (!element) return;
+        element.textContent = avatarFor(name);
+      };
+
+      const refreshAvatars = () => {
         const userName = document.getElementById("userName");
         const userAvatar = document.getElementById("userAvatar");
-        if (userName && userAvatar) userAvatar.textContent = avatarFor(userName.textContent);
+        if (userName) applyAvatar(userAvatar, userName.textContent);
 
         document.querySelectorAll(".account-option").forEach(option => {
           const name = option.querySelector(".account-option-info strong");
           const avatar = option.querySelector(".account-option-avatar");
-          if (name && avatar) avatar.textContent = avatarFor(name.textContent);
+          if (name) applyAvatar(avatar, name.textContent);
         });
-      }
+      };
 
       document.addEventListener("DOMContentLoaded", () => {
         refreshAvatars();
         const observer = new MutationObserver(refreshAvatars);
-        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          characterData: true
+        });
       });
     })();
   </script>
