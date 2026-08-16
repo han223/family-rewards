@@ -6,6 +6,12 @@
   <meta name="theme-color" content="#f6f7f5" />
   <title>Family Rewards</title>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .avatar,.account-option-avatar{background:#fff;border:1px solid #e4e5df;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .avatar svg,.account-option-avatar svg{width:100%;height:100%;display:block}
+    .account-option-avatar{width:42px;height:42px;padding:2px}
+    .avatar{padding:2px}
+  </style>
 </head>
 <body>
   <div id="app">
@@ -17,7 +23,7 @@
             <div class="user-name" id="userName">Old Zhu</div>
             <div class="points"><strong id="points">0</strong> points</div>
           </div>
-          <div class="avatar" id="userAvatar" aria-hidden="true">🐷</div>
+          <div class="avatar" id="userAvatar" aria-hidden="true"></div>
           <span class="account-chevron" aria-hidden="true">⌄</span>
         </button>
         <div id="accountMenu" class="account-menu" style="display:none;">
@@ -54,5 +60,44 @@
   <div class="toast" id="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/app.js"></script>
+  <script>
+    /* Cute family avatars: inline SVG, so no extra files or storage are required. */
+    function cuteAvatarSvg(name) {
+      const n = String(name || '').trim().toLowerCase();
+      if (n === '饲养员') {
+        return `<svg viewBox="0 0 64 64" role="img" aria-label="饲养员 avatar"><defs><linearGradient id="moonBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0e9ff"/><stop offset="1" stop-color="#d9e9ff"/></linearGradient></defs><circle cx="32" cy="32" r="30" fill="url(#moonBg)"/><circle cx="43" cy="18" r="7" fill="#fff3a6"/><path d="M19 25c4-8 22-9 27 0v17c0 9-7 14-14 14S18 51 18 42V29z" fill="#ffd9c9"/><path d="M16 30c0-13 7-21 17-21 8 0 16 6 18 18-6-3-10-7-13-12-5 8-12 12-22 15z" fill="#8f73c9"/><path d="M25 43c4 3 10 3 14 0" fill="none" stroke="#7b4f68" stroke-width="2" stroke-linecap="round"/><circle cx="25" cy="35" r="2" fill="#3d3152"/><circle cx="39" cy="35" r="2" fill="#3d3152"/><path d="M48 12l2 4 4 1-4 2-2 4-2-4-4-2 4-1z" fill="#fff"/></svg>`;
+      }
+      if (n === 'old zhu') {
+        return `<svg viewBox="0 0 64 64" role="img" aria-label="Old Zhu avatar"><defs><linearGradient id="pigBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffdfe9"/><stop offset="1" stop-color="#ffc3d6"/></linearGradient></defs><circle cx="32" cy="32" r="30" fill="url(#pigBg)"/><path d="M16 28c-2-10 2-17 8-15l8 5 8-5c7-2 11 5 8 15v12c0 10-7 16-16 16s-16-6-16-16z" fill="#f59bb2"/><path d="M18 23c-3-9 1-15 7-11l7 6-10 5zM46 23c3-9-1-15-7-11l-7 6 10 5z" fill="#ef86a2"/><circle cx="25" cy="34" r="2" fill="#63384a"/><circle cx="39" cy="34" r="2" fill="#63384a"/><ellipse cx="32" cy="42" rx="9" ry="6" fill="#f7b3c5"/><ellipse cx="29" cy="42" rx="2" ry="2.5" fill="#9c526a"/><ellipse cx="35" cy="42" rx="2" ry="2.5" fill="#9c526a"/><path d="M25 49c4 3 10 3 14 0" fill="none" stroke="#8c435d" stroke-width="2" stroke-linecap="round"/></svg>`;
+      }
+      if (n === 'shit') {
+        return `<svg viewBox="0 0 64 64" role="img" aria-label="shit avatar"><defs><linearGradient id="poopBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0d2"/><stop offset="1" stop-color="#ffe0a6"/></linearGradient></defs><circle cx="32" cy="32" r="30" fill="url(#poopBg)"/><path d="M20 51c-5-2-7-7-4-12 2-3 5-4 7-5-2-7 2-12 8-12 0-7 5-11 10-9 5 2 6 7 4 11 5 1 8 5 7 10-1 4-4 6-8 7 2 5-1 10-7 11z" fill="#9b6638"/><path d="M26 29c3-5 9-6 13-3 4 3 4 8 1 11-3 3-9 3-12 0" fill="#a97440"/><circle cx="27" cy="39" r="2" fill="#382417"/><circle cx="38" cy="39" r="2" fill="#382417"/><path d="M29 45c2 2 5 2 7 0" fill="none" stroke="#5b3924" stroke-width="2" stroke-linecap="round"/></svg>`;
+      }
+      return `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#eef0eb"/><circle cx="32" cy="25" r="10" fill="#bbbdb7"/><path d="M16 51c2-11 9-16 16-16s14 5 16 16" fill="#bbbdb7"/></svg>`;
+    }
+
+    function updateCuteAvatar() {
+      const el = document.getElementById('userAvatar');
+      const name = document.getElementById('userName')?.textContent || '';
+      if (el) el.innerHTML = cuteAvatarSvg(name);
+    }
+
+    const originalUpdateUserHeader = window.updateUserHeader;
+    window.updateUserHeader = function() {
+      if (typeof originalUpdateUserHeader === 'function') originalUpdateUserHeader();
+      updateCuteAvatar();
+    };
+
+    const originalRenderAccountMenu = window.renderAccountMenu;
+    window.renderAccountMenu = function() {
+      if (typeof originalRenderAccountMenu === 'function') originalRenderAccountMenu();
+      document.querySelectorAll('.account-option-avatar').forEach(el => {
+        const name = el.closest('.account-option')?.querySelector('.account-option-info strong')?.textContent || '';
+        el.innerHTML = cuteAvatarSvg(name);
+      });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => setTimeout(updateCuteAvatar, 50));
+  </script>
 </body>
 </html>
