@@ -45,25 +45,17 @@
       if (n === '大厨' || n === 'chef') return `<svg viewBox="0 0 64 64" role="img" aria-label="大厨 avatar"><defs><linearGradient id="chefBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff7ed"/><stop offset="1" stop-color="#ffe8d2"/></linearGradient></defs><circle cx="32" cy="32" r="30" fill="url(#chefBg)"/><path d="M17 25c-3-8 3-14 9-10 2-7 11-7 13 0 7-4 13 4 9 10" fill="#fff" stroke="#d9d0c7" stroke-width="2"/><path d="M18 24h28v9H18z" fill="#fff" stroke="#d9d0c7" stroke-width="2"/><path d="M22 37c1-7 5-10 10-10s9 3 10 10v12H22z" fill="#6f402f"/><circle cx="32" cy="42" r="11" fill="#f0c5a5"/><path d="M21 41c1-8 5-13 11-13 6 0 10 5 11 13-3-3-6-4-11-4s-8 1-11 4z" fill="#5b3428"/><circle cx="27" cy="43" r="1.7" fill="#44312a"/><circle cx="37" cy="43" r="1.7" fill="#44312a"/><path d="M29 49c2 2 4 2 6 0" fill="none" stroke="#9b594d" stroke-width="1.8" stroke-linecap="round"/><path d="M19 52c5-5 21-5 26 0v6H19z" fill="#fff"/><path d="M25 52l7 5 7-5" fill="none" stroke="#d9d0c7" stroke-width="2"/></svg>`;
       return `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#eef0eb"/><circle cx="32" cy="25" r="10" fill="#bbbdb7"/><path d="M16 51c2-11 9-16 16-16s14 5 16 16" fill="#bbbdb7"/></svg>`;
     }
-    function renderAllAvatars() {
-      const currentName = document.getElementById('userName')?.textContent || '';
-      const current = document.getElementById('userAvatar');
-      if (current) current.innerHTML = cuteAvatarSvg(currentName);
-      document.querySelectorAll('.account-option-avatar').forEach(el => { const option = el.closest('.account-option'); const name = option?.querySelector('.account-option-info strong')?.textContent || ''; el.innerHTML = cuteAvatarSvg(name); });
-    }
-    function updateCuteAvatar() { renderAllAvatars(); }
-    const originalUpdateUserHeader = window.updateUserHeader;
-    window.updateUserHeader = function () { if (typeof originalUpdateUserHeader === 'function') originalUpdateUserHeader(); requestAnimationFrame(renderAllAvatars); setTimeout(renderAllAvatars, 100); };
-    const originalRenderAccountMenu = window.renderAccountMenu;
-    window.renderAccountMenu = function () { if (typeof originalRenderAccountMenu === 'function') originalRenderAccountMenu(); requestAnimationFrame(renderAllAvatars); setTimeout(renderAllAvatars, 50); setTimeout(renderAllAvatars, 200); };
-    Object.defineProperty(window,'currentProfile',{get:()=>currentProfile});
-    Object.defineProperty(window,'profiles',{get:()=>profiles});
-    window.supabaseClient=supabaseClient;
-    document.addEventListener('DOMContentLoaded', () => { setTimeout(renderAllAvatars, 50); setTimeout(renderAllAvatars, 300); setTimeout(renderAllAvatars, 1000); });
+    function renderAllAvatars() { const currentName=document.getElementById('userName')?.textContent||''; const current=document.getElementById('userAvatar'); if(current)current.innerHTML=cuteAvatarSvg(currentName); document.querySelectorAll('.account-option-avatar').forEach(el=>{const option=el.closest('.account-option');const name=option?.querySelector('.account-option-info strong')?.textContent||'';el.innerHTML=cuteAvatarSvg(name);}); }
+    function updateCuteAvatar(){renderAllAvatars();}
+    const originalUpdateUserHeader=window.updateUserHeader; window.updateUserHeader=function(){if(typeof originalUpdateUserHeader==='function')originalUpdateUserHeader();requestAnimationFrame(renderAllAvatars);setTimeout(renderAllAvatars,100);};
+    const originalRenderAccountMenu=window.renderAccountMenu; window.renderAccountMenu=function(){if(typeof originalRenderAccountMenu==='function')originalRenderAccountMenu();requestAnimationFrame(renderAllAvatars);setTimeout(renderAllAvatars,50);setTimeout(renderAllAvatars,200);};
+    Object.defineProperty(window,'currentProfile',{get:()=>currentProfile}); Object.defineProperty(window,'profiles',{get:()=>profiles}); window.supabaseClient=supabaseClient;
+    document.addEventListener('DOMContentLoaded',()=>{setTimeout(renderAllAvatars,50);setTimeout(renderAllAvatars,300);setTimeout(renderAllAvatars,1000);});
   </script>
   <script src="js/points-history-redeem.js"></script>
   <script src="js/manage-points.js"></script>
   <script src="js/manage-rewards.js"></script>
+  <script src="js/reward-stock.js"></script>
   <script src="js/history.js"></script>
 </body>
 </html>
