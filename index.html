@@ -5,80 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Family Rewards</title>
   <link rel="stylesheet" href="css/style.css" />
-  <style>
-    #loginScreen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      background: #f7f7f7;
-    }
-    .login-card {
-      width: min(420px, 100%);
-      background: #fff;
-      border-radius: 20px;
-      padding: 36px;
-      box-shadow: 0 12px 40px rgba(0,0,0,.08);
-    }
-    .login-card h1 { margin: 0 0 8px; }
-    .login-card p { margin: 0 0 28px; color: #777; }
-    .login-field { margin-bottom: 16px; }
-    .login-field label { display:block; margin-bottom:7px; font-weight:600; }
-    .login-field input {
-      width:100%; box-sizing:border-box; padding:13px 14px;
-      border:1px solid #ddd; border-radius:10px; font-size:16px;
-    }
-    #loginButton {
-      width:100%; border:0; border-radius:10px; padding:13px;
-      font-size:16px; font-weight:600; cursor:pointer;
-    }
-    #loginError { min-height:20px; margin-top:14px; color:#c62828; font-size:14px; }
-    #app { display:none; }
-    .logout-button {
-      border: 1px solid #ddd;
-      background: #fff;
-      border-radius: 9px;
-      padding: 8px 12px;
-      cursor: pointer;
-      margin-left: 12px;
-    }
-  </style>
 </head>
 <body>
-
-  <div id="loginScreen">
-    <div class="login-card">
-      <h1>Family Rewards</h1>
-      <p>Sign in to access your rewards store.</p>
-
-      <form id="loginForm">
-        <div class="login-field">
-          <label for="loginEmail">Email</label>
-          <input id="loginEmail" type="email" autocomplete="email" required />
-        </div>
-
-        <div class="login-field">
-          <label for="loginPassword">Password</label>
-          <input id="loginPassword" type="password" autocomplete="current-password" required />
-        </div>
-
-        <button id="loginButton" type="submit">Log in</button>
-        <div id="loginError"></div>
-      </form>
-    </div>
-  </div>
 
   <div id="app">
     <header>
       <div class="brand">Family Rewards</div>
-      <div class="account">
-        <div class="user-info">
-          <div class="user-name" id="userName">Alex</div>
-          <div class="points"><strong id="points">2,450</strong> points</div>
+
+      <div class="account" style="position:relative;">
+        <button class="account-switcher" id="accountSwitcher" type="button" onclick="toggleAccountMenu()" aria-expanded="false">
+          <div class="user-info">
+            <div class="user-name" id="userName">Alex</div>
+            <div class="points"><strong id="points">0</strong> points</div>
+          </div>
+          <div class="avatar" id="userAvatar">A</div>
+          <span style="font-size:12px; margin-left:4px;">▼</span>
+        </button>
+
+        <div id="accountMenu" class="account-menu" style="display:none;">
+          <div class="account-menu-title">Switch account</div>
+          <div id="accountList"></div>
         </div>
-        <div class="avatar" id="userAvatar">A</div>
-        <button class="logout-button" onclick="logout()">Log out</button>
       </div>
     </header>
 
