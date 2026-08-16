@@ -11,7 +11,6 @@
   <div id="app">
     <header>
       <div class="brand">Family Rewards</div>
-
       <div class="account">
         <button class="account-switcher" id="accountSwitcher" type="button" onclick="toggleAccountMenu()" aria-expanded="false" aria-haspopup="true">
           <div class="user-info">
@@ -21,121 +20,39 @@
           <div class="avatar" id="userAvatar" aria-hidden="true">🐷</div>
           <span class="account-chevron" aria-hidden="true">⌄</span>
         </button>
-
         <div id="accountMenu" class="account-menu" style="display:none;">
           <div class="account-menu-title">Switch account</div>
           <div id="accountList"></div>
         </div>
       </div>
     </header>
-
     <main>
       <section class="hero">
-        <div>
-          <h1>Rewards Store</h1>
-          <p>Choose something you've earned.</p>
-        </div>
+        <div><h1>Rewards Store</h1><p>Choose something you've earned.</p></div>
         <button class="history-button" onclick="showHistory()">Redemption History</button>
       </section>
-
       <nav class="filters" id="filters" aria-label="Reward categories"></nav>
       <section class="grid" id="productGrid"></section>
     </main>
   </div>
-
   <div class="overlay" id="overlay">
     <div class="modal">
-      <h2 id="modalTitle">Redeem reward?</h2>
-      <p class="modal-description" id="modalDescription"></p>
+      <h2 id="modalTitle">Redeem reward?</h2><p class="modal-description" id="modalDescription"></p>
       <div class="balance-box" id="modalBalance"></div>
-      <div class="modal-buttons">
-        <button onclick="closeModal()">Cancel</button>
-        <button class="confirm" onclick="confirmRedeem()">Redeem</button>
-      </div>
+      <div class="modal-buttons"><button onclick="closeModal()">Cancel</button><button class="confirm" onclick="confirmRedeem()">Redeem</button></div>
     </div>
   </div>
-
   <div class="overlay" id="editOverlay">
     <div class="edit-modal">
-      <div class="edit-modal-header">
-        <div>
-          <h2>Edit Reward</h2>
-          <p>Update this reward's information.</p>
-        </div>
-        <button class="close-edit-button" onclick="closeEditReward()" aria-label="Close">×</button>
-      </div>
-
-      <div class="edit-field">
-        <label for="editRewardName">Reward name</label>
-        <input id="editRewardName" type="text" placeholder="Reward name" />
-      </div>
-
-      <div class="edit-field">
-        <label for="editRewardCost">Points required</label>
-        <input id="editRewardCost" type="number" min="0" step="1" placeholder="Points" />
-      </div>
-
-      <div class="edit-field">
-        <label>Reward photo</label>
-        <div class="edit-photo-area" id="editPhotoArea">
-          <div class="edit-photo-preview" id="editPhotoPreview"></div>
-        </div>
-        <div class="photo-actions">
-          <button class="secondary-button" onclick="chooseRewardPhoto()">📷 Change photo</button>
-          <button class="secondary-button danger-button" onclick="removeRewardPhoto()">Remove photo</button>
-        </div>
-        <input type="file" id="rewardPhotoInput" accept="image/*" hidden />
-      </div>
-
-      <div class="edit-modal-buttons">
-        <button class="cancel-edit-button" onclick="closeEditReward()">Cancel</button>
-        <button class="save-edit-button" onclick="saveEditedReward()">Save changes</button>
-      </div>
+      <div class="edit-modal-header"><div><h2>Edit Reward</h2><p>Update this reward's information.</p></div><button class="close-edit-button" onclick="closeEditReward()" aria-label="Close">×</button></div>
+      <div class="edit-field"><label for="editRewardName">Reward name</label><input id="editRewardName" type="text" placeholder="Reward name" /></div>
+      <div class="edit-field"><label for="editRewardCost">Points required</label><input id="editRewardCost" type="number" min="0" step="1" placeholder="Points" /></div>
+      <div class="edit-field"><label>Reward photo</label><div class="edit-photo-area" id="editPhotoArea"><div class="edit-photo-preview" id="editPhotoPreview"></div></div><div class="photo-actions"><button class="secondary-button" onclick="chooseRewardPhoto()">📷 Change photo</button><button class="secondary-button danger-button" onclick="removeRewardPhoto()">Remove photo</button></div><input type="file" id="rewardPhotoInput" accept="image/*" hidden /></div>
+      <div class="edit-modal-buttons"><button class="cancel-edit-button" onclick="closeEditReward()">Cancel</button><button class="save-edit-button" onclick="saveEditedReward()">Save changes</button></div>
     </div>
   </div>
-
   <div class="toast" id="toast"></div>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/app.js"></script>
-  <script>
-    // Keep account avatars consistent even when app.js switches profiles.
-    (function () {
-      const avatarFor = (name) => {
-        const value = String(name || "").trim().toLowerCase();
-        if (value === "饲养员") return "🌙";
-        if (value === "old zhu") return "🐷";
-        if (value === "shit") return "💩";
-        return "👤";
-      };
-
-      const applyAvatar = (element, name) => {
-        if (!element) return;
-        element.textContent = avatarFor(name);
-      };
-
-      const refreshAvatars = () => {
-        const userName = document.getElementById("userName");
-        const userAvatar = document.getElementById("userAvatar");
-        if (userName) applyAvatar(userAvatar, userName.textContent);
-
-        document.querySelectorAll(".account-option").forEach(option => {
-          const name = option.querySelector(".account-option-info strong");
-          const avatar = option.querySelector(".account-option-avatar");
-          if (name) applyAvatar(avatar, name.textContent);
-        });
-      };
-
-      document.addEventListener("DOMContentLoaded", () => {
-        refreshAvatars();
-        const observer = new MutationObserver(refreshAvatars);
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true,
-          characterData: true
-        });
-      });
-    })();
-  </script>
 </body>
 </html>
