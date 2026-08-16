@@ -126,6 +126,23 @@
     try {
       const result = await supabaseClient.from("profiles").update({ balance: newBalance }).eq("id", profileId).select("id,name,balance,role").single();
       if (result.error) throw result.error;
+
+      const historyInsert = await supabaseClient
+        .from("points_history")
+        .insert({
+          user_id: profileId,
+          amount: direction * amount,
+          type: "adjustment",
+          description: direction > 0 ? `Points added by ${currentProfile?.name || "Parent"}` : `Points removed by ${currentProfile?.name || "Parent"}`
+        })
+        .select()
+        .single();
+
+      if (historyInsert.error) {
+        await supabaseClient.from("profiles").update({ balance: currentBalance }).eq("id", profileId);
+        throw historyInsert.error;
+      }
+
       const index = profiles.findIndex(item => Number(item.id) === Number(profileId));
       if (index >= 0) profiles[index] = result.data;
       const balanceLabel = card.querySelector(".points-child-main span");
