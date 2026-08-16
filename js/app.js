@@ -14,7 +14,6 @@ let selectedReward = null;
 let editingReward = null;
 let pendingPhotoFile = null;
 let photoRemoved = false;
-
 let balance = 0;
 let redemptionHistory = [];
 let dataLoaded = false;
@@ -32,6 +31,107 @@ function getImageUrl(image) {
   if (!image) return null;
   if (image.startsWith("http://") || image.startsWith("https://") || image.startsWith("data:")) return image;
   return supabaseClient.storage.from(IMAGE_BUCKET).getPublicUrl(image).data?.publicUrl || null;
+}
+
+function showLoginScreen() {
+  const login = document.getElementById("loginScreen");
+  const app = document.getElementById("app");
+  if (login) login.style.display = "flex";
+  if (app) app.style.display = "none";
+}
+
+function showAppScreen() {
+  const login = document.getElementById("loginScreen");
+  const app = document.getElementById("app");
+  if (login) login.style.display = "none";
+  if (app) app.style.display = "block";
+}
+
+function setLoginError(message) {
+  const element = document.getElementById("loginError");
+  if (element) element.textContent = message || "";
+}
+
+async function login(event) {
+  event.preventDefault();
+  const email = document.getElementById("loginEmail")?.value.trim();
+  const password = document.getElementById("loginPassword")?.value;
+  const button = document.getElementById("loginButton");
+
+  setLoginError("");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Logging in...";
+  }
+
+  const result = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  if (result.error) {
+    console.error("Login error:", result.error);
+    setLoginError(result.error.message || "Unable to log in.");
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Log in";
+    }
+    return;
+  }
+
+  await startAuthenticatedApp(result.data.user);
+  if (button) {
+    button.disabled = false;
+    button.textContent = "Log in";
+  }
+}
+
+async function logout() {
+  await supabaseClient.auth.signOut();
+  dataLoaded = false;
+  rewards = [];
+  redemptionHistory = [];
+  balance = 0;
+  showLoginScreen();
+}
+
+async function startAuthenticatedApp(user) {
+  showAppScreen();
+  setLoginError("");
+
+  const profileResult = await supabaseClient
+    .from("profiles")
+    .select("id,name,balance,role")
+    .eq("id", PROFILE_ID)
+    .single();
+
+  if (profileResult.error) {
+    console.error("Profile load error:", profileResult.error);
+    showLoginScreen();
+    setLoginError("Login succeeded, but your Family Rewards profile could not be loaded.");
+    return;
+  }
+
+  const profile = profileResult.data;
+  const userName = profile.name || user.email?.split("@")[0] || "User";
+  const userNameElement = document.getElementById("userName");
+  const avatarElement = document.getElementById("userAvatar");
+  if (userNameElement) userNameElement.textContent = userName;
+  if (avatarElement) avatarElement.textContent = userName.charAt(0).toUpperCase();
+
+  await initializeApp();
+}
+
+async function checkAuth() {
+  const result = await supabaseClient.auth.getSession();
+  if (result.error) {
+    console.error("Session error:", result.error);
+    showLoginScreen();
+    return;
+  }
+
+  if (result.data.session?.user) {
+    await startAuthenticatedApp(result.data.session.user);
+  } else {
+    showLoginScreen();
+  }
 }
 
 async function loadCloudData() {
@@ -183,7 +283,6 @@ async function confirmRedeem() {
 
   const newBalance = balance - cost;
   const rewardName = selectedReward.name;
-
   const confirmButton = document.querySelector("#overlay .confirm");
   if (confirmButton) {
     confirmButton.disabled = true;
@@ -210,7 +309,6 @@ async function confirmRedeem() {
       .single();
 
     if (historyInsert.error) {
-      // Try to restore the balance if the history insert failed.
       await supabaseClient
         .from("profiles")
         .update({ balance: balance })
@@ -364,7 +462,6 @@ async function saveEditedReward() {
 
   try {
     let imagePath = oldImagePath;
-
     if (pendingPhotoFile) imagePath = await uploadRewardPhoto(pendingPhotoFile, id);
     if (photoRemoved) imagePath = null;
 
@@ -374,10 +471,7 @@ async function saveEditedReward() {
       .eq("id", id);
 
     if (update.error) throw update.error;
-
-    if (oldImagePath && imagePath !== oldImagePath) {
-      await deleteRewardPhoto(oldImagePath);
-    }
+    if (oldImagePath && imagePath !== oldImagePath) await deleteRewardPhoto(oldImagePath);
 
     closeEditReward();
     await loadRewards();
@@ -419,11 +513,6 @@ function showHistory() {
   showToast(latest);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("rewardPhotoInput");
-  if (input) input.addEventListener("change", handlePhotoSelection);
-});
-
 async function initializeApp() {
   const cloudLoaded = await loadCloudData();
   if (!cloudLoaded) {
@@ -436,4 +525,18 @@ async function initializeApp() {
   await loadRewards();
 }
 
-initializeApp();
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("rewardPhotoInput");
+  if (input) input.addEventListener("change", handlePhotoSelection);
+
+  const form = document.getElementById("loginForm");
+  if (form) form.addEventListener("submit", login);
+
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_OUT") {
+      showLoginScreen();
+    }
+  });
+
+  checkAuth();
+});
