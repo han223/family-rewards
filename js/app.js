@@ -39,6 +39,14 @@ function getProfileName(profile) {
   return profile?.name || "Family Member";
 }
 
+function getAvatar(name) {
+  const value = String(name || "").trim().toLowerCase();
+  if (value === "饲养员") return "🌙";
+  if (value === "old zhu") return "🐷";
+  if (value === "shit") return "💩";
+  return "👤";
+}
+
 function isParent() {
   return String(currentProfile?.role || "").toLowerCase() === "parent";
 }
@@ -81,11 +89,11 @@ function renderAccountMenu() {
   list.innerHTML = profiles.map(profile => {
     const active = currentProfile && profile.id === currentProfile.id;
     const role = profile.role === "parent" ? "Parent" : "Child";
-    const initial = escapeHtml(getProfileName(profile).charAt(0).toUpperCase());
+    const avatar = getAvatar(profile.name);
 
     return `
       <button class="account-option ${active ? "active" : ""}" onclick="switchProfile(${profile.id})">
-        <span class="account-option-avatar">${initial}</span>
+        <span class="account-option-avatar">${avatar}</span>
         <span class="account-option-info">
           <strong>${escapeHtml(getProfileName(profile))}</strong>
           <small>${role} · ${Number(profile.balance || 0).toLocaleString()} pts</small>
@@ -138,7 +146,7 @@ function updateUserHeader() {
   const avatarElement = document.getElementById("userAvatar");
 
   if (nameElement) nameElement.textContent = name;
-  if (avatarElement) avatarElement.textContent = name.charAt(0).toUpperCase();
+  if (avatarElement) avatarElement.textContent = getAvatar(name);
   updateBalanceDisplay();
 }
 
