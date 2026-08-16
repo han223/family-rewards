@@ -18,7 +18,7 @@
             <div class="user-name" id="userName">Alex</div>
             <div class="points"><strong id="points">0</strong> points</div>
           </div>
-          <div class="avatar" id="userAvatar">A</div>
+          <div class="avatar" id="userAvatar">🐷</div>
           <span style="font-size:12px; margin-left:4px;">▼</span>
         </button>
 
@@ -98,5 +98,35 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/app.js"></script>
+  <script>
+    /* Family account avatars */
+    (function () {
+      const avatarFor = (name) => {
+        const value = String(name || "").toLowerCase().trim();
+        if (value === "饲养员") return "🌙";
+        if (value === "old zhu") return "🐷";
+        if (value === "shit") return "💩";
+        return "👤";
+      };
+
+      function refreshAvatars() {
+        const userName = document.getElementById("userName");
+        const userAvatar = document.getElementById("userAvatar");
+        if (userName && userAvatar) userAvatar.textContent = avatarFor(userName.textContent);
+
+        document.querySelectorAll(".account-option").forEach(option => {
+          const name = option.querySelector(".account-option-info strong");
+          const avatar = option.querySelector(".account-option-avatar");
+          if (name && avatar) avatar.textContent = avatarFor(name.textContent);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        refreshAvatars();
+        const observer = new MutationObserver(refreshAvatars);
+        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+      });
+    })();
+  </script>
 </body>
 </html>
