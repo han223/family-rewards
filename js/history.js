@@ -1,5 +1,5 @@
 /* =====================================================
-   REDEMPTION HISTORY
+   POINTS HISTORY
    Children see their own history. Parent sees family history.
 ===================================================== */
 
@@ -14,27 +14,19 @@
     if (!value) return "";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   }
 
   function formatTime(value) {
     if (!value) return "";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit"
-    });
+    return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   }
 
   function ensureModal() {
     let modal = document.getElementById("historyOverlay");
     if (modal) return modal;
-
     modal = document.createElement("div");
     modal.id = "historyOverlay";
     modal.className = "overlay history-overlay";
@@ -43,19 +35,16 @@
         <div class="history-header">
           <div>
             <div class="history-kicker">Family Rewards</div>
-            <h2 id="historyTitle">Redemption History</h2>
-            <p id="historySubtitle">Your recent rewards</p>
+            <h2 id="historyTitle">Points History</h2>
+            <p id="historySubtitle">Your recent points activity</p>
           </div>
           <button class="history-close" type="button" aria-label="Close">×</button>
         </div>
         <div id="historyContent" class="history-content"></div>
-      </div>
-    `;
+      </div>`;
     document.body.appendChild(modal);
     modal.querySelector(".history-close").addEventListener("click", closeHistory);
-    modal.addEventListener("click", event => {
-      if (event.target === modal) closeHistory();
-    });
+    modal.addEventListener("click", event => { if (event.target === modal) closeHistory(); });
     return modal;
   }
 
@@ -66,35 +55,26 @@
 
   async function showHistory() {
     if (!window.currentProfile || !window.supabaseClient) return;
-
     const modal = ensureModal();
     const content = modal.querySelector("#historyContent");
     const subtitle = modal.querySelector("#historySubtitle");
-    const isParentAccount = String(window.currentProfile.role || "").toLowerCase() === "parent";
-
+    const isParent = String(window.currentProfile.role || "").toLowerCase() === "parent";
     content.innerHTML = '<div class="history-loading"><span class="history-spinner"></span>Loading history...</div>';
-    subtitle.textContent = isParentAccount ? "Recent activity from the whole family" : "Your recent rewards";
+    subtitle.textContent = isParent ? "Recent activity from the whole family" : "Your recent points activity";
     modal.style.display = "flex";
 
     try {
       let query = window.supabaseClient
-        .from("redemptions")
-        .select("id,user_id,reward_id,reward_name,cost,created_at")
+        .from("points_history")
+        .select("id,user_id,amount,type,description,created_at")
         .order("created_at", { ascending: false });
-
-      if (!isParentAccount) query = query.eq("user_id", window.currentProfile.id);
-
+      if (!isParent) query = query.eq("user_id", window.currentProfile.id);
       const result = await query;
       if (result.error) throw result.error;
 
       const rows = result.data || [];
       if (!rows.length) {
-        content.innerHTML = `
-          <div class="history-empty">
-            <div class="history-empty-icon">🎁</div>
-            <strong>No redemptions yet</strong>
-            <p>Rewards you redeem will appear here.</p>
-          </div>`;
+        content.innerHTML = '<div class="history-empty"><div class="history-empty-icon">✨</div><strong>No points activity yet</strong><p>Points you receive or spend will appear here.</p></div>';
         return;
       }
 
@@ -103,34 +83,30 @@
         const profile = profileMap.get(Number(item.user_id));
         const name = profile?.name || (Number(item.user_id) === Number(window.currentProfile.id) ? window.currentProfile.name : "Family member");
         const avatar = historyAvatar(name);
+        const amount = Number(item.amount || 0);
+        const positive = amount > 0;
+        const type = String(item.type || "").toLowerCase();
+        const icon = type === "redemption" ? "🛒" : positive ? "⭐" : "➖";
+        const title = type === "redemption" ? "Reward Redeemed" : positive ? "Points Added" : "Points Removed";
+        const amountText = `${amount > 0 ? "+" : "−"}${Math.abs(amount).toLocaleString()}`;
         return `
           <div class="history-item">
             <div class="history-item-avatar">${avatar}</div>
             <div class="history-item-main">
-              <div class="history-item-title">${escapeHistory(item.reward_name || "Reward")}</div>
-              <div class="history-item-meta">${isParentAccount ? `<strong>${escapeHistory(name)}</strong> · ` : ""}${formatDate(item.created_at)} · ${formatTime(item.created_at)}</div>
+              <div class="history-item-title">${icon} ${escapeHistory(title)}</div>
+              <div class="history-item-meta">${isParent ? `<strong>${escapeHistory(name)}</strong> · ` : ""}${escapeHistory(item.description || "Points activity")} · ${formatDate(item.created_at)} · ${formatTime(item.created_at)}</div>
             </div>
-            <div class="history-item-cost">−${Number(item.cost || 0).toLocaleString()}<small>pts</small></div>
+            <div class="history-item-cost ${positive ? "history-positive" : "history-negative"}">${amountText}<small>pts</small></div>
           </div>`;
       }).join("");
     } catch (error) {
-      console.error("History error:", error);
-      content.innerHTML = `
-        <div class="history-empty">
-          <div class="history-empty-icon">⚠️</div>
-          <strong>Unable to load history</strong>
-          <p>${escapeHistory(error.message || "Please try again.")}</p>
-        </div>`;
+      console.error("Points history error:", error);
+      content.innerHTML = `<div class="history-empty"><div class="history-empty-icon">⚠️</div><strong>Unable to load history</strong><p>${escapeHistory(error.message || "Please try again.")}</p></div>`;
     }
   }
 
   function escapeHistory(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
   }
 
   window.showHistory = showHistory;
