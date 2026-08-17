@@ -131,6 +131,16 @@
   window.manageRewardMove=move;
   window.manageRewardToggle=toggle;
 
-  function init(){injectStyles();ensureButton();setTimeout(ensureButton,300);setTimeout(ensureButton,1000);window.addEventListener("familyProfileChanged",()=>setTimeout(ensureButton,0));}
+  function init(){
+    injectStyles();
+    ensureButton();
+    setTimeout(ensureButton,300);
+    setTimeout(ensureButton,1000);
+    setTimeout(ensureButton,2000);
+    setTimeout(ensureButton,4000);
+    window.addEventListener("familyProfileChanged",()=>setTimeout(ensureButton,0));
+    const retry=setInterval(()=>{ ensureButton(); if(parentOnly() && document.getElementById("manageRewardsButton")) clearInterval(retry); },1000);
+    setTimeout(()=>clearInterval(retry),15000);
+  }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
