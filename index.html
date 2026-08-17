@@ -11,11 +11,6 @@
     .avatar svg,.account-option-avatar svg{width:100%;height:100%;display:block}
     .account-option-avatar{width:42px;height:42px;padding:2px;flex:none}
     .avatar{padding:2px}
-    /* Categories are no longer part of the Family Rewards UI. */
-    #filters{display:none!important}
-    .mr-name small{display:none!important}
-    .mr-category-note{display:none!important}
-    .mr-category-hidden{display:none!important}
   </style>
 </head>
 <body>
@@ -55,29 +50,7 @@
     const originalUpdateUserHeader=window.updateUserHeader; window.updateUserHeader=function(){if(typeof originalUpdateUserHeader==='function')originalUpdateUserHeader();requestAnimationFrame(renderAllAvatars);setTimeout(renderAllAvatars,100);};
     const originalRenderAccountMenu=window.renderAccountMenu; window.renderAccountMenu=function(){if(typeof originalRenderAccountMenu==='function')originalRenderAccountMenu();requestAnimationFrame(renderAllAvatars);setTimeout(renderAllAvatars,50);setTimeout(renderAllAvatars,200);};
     Object.defineProperty(window,'currentProfile',{get:()=>currentProfile}); Object.defineProperty(window,'profiles',{get:()=>profiles}); window.supabaseClient=supabaseClient;
-    function removeCategoryUI(){
-      const filters=document.getElementById('filters');
-      if(filters) filters.style.display='none';
-      if(typeof activeCategory!=='undefined') activeCategory='All';
-      const modal=document.getElementById('manageRewardsOverlay');
-      if(modal){
-        modal.querySelectorAll('.mr-field').forEach(field=>{
-          const label=field.querySelector('label');
-          if(label && label.textContent.trim().toLowerCase()==='category'){
-            field.classList.add('mr-category-hidden');
-            const input=field.querySelector('input');
-            if(input && !input.value.trim()) input.value='General';
-          }
-        });
-        modal.querySelectorAll('.mr-name small').forEach(el=>el.style.display='none');
-      }
-    }
-    const categoryObserver=new MutationObserver(()=>removeCategoryUI());
-    document.addEventListener('DOMContentLoaded',()=>{
-      setTimeout(renderAllAvatars,50);setTimeout(renderAllAvatars,300);setTimeout(renderAllAvatars,1000);
-      removeCategoryUI();
-      categoryObserver.observe(document.body,{childList:true,subtree:true});
-    });
+    document.addEventListener('DOMContentLoaded',()=>{setTimeout(renderAllAvatars,50);setTimeout(renderAllAvatars,300);setTimeout(renderAllAvatars,1000);});
   </script>
   <script src="js/points-history-redeem.js"></script>
   <script src="js/manage-points.js"></script>
